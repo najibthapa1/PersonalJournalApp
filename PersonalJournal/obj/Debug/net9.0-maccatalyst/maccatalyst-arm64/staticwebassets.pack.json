@@ -1,0 +1,45 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/najibthapa1/Documents/College/3/C#/PersonalJournal/PersonalJournal/obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/scopedcss/bundle/PersonalJournal.styles.css",
+      "PackagePath": "staticwebassets/PersonalJournal.styles.css"
+    },
+    {
+      "Id": "/Users/najibthapa1/Documents/College/3/C#/PersonalJournal/PersonalJournal/wwwroot/css/app.css",
+      "PackagePath": "staticwebassets/css/app.css"
+    },
+    {
+      "Id": "/Users/najibthapa1/Documents/College/3/C#/PersonalJournal/PersonalJournal/wwwroot/css/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/Users/najibthapa1/Documents/College/3/C#/PersonalJournal/PersonalJournal/wwwroot/css/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/Users/najibthapa1/Documents/College/3/C#/PersonalJournal/PersonalJournal/wwwroot/index.html",
+      "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/staticwebassets/msbuild.PersonalJournal.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/staticwebassets/msbuild.PersonalJournal.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/staticwebassets/msbuild.build.PersonalJournal.props",
+      "PackagePath": "build\\PersonalJournal.props"
+    },
+    {
+      "Id": "obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/staticwebassets/msbuild.buildMultiTargeting.PersonalJournal.props",
+      "PackagePath": "buildMultiTargeting\\PersonalJournal.props"
+    },
+    {
+      "Id": "obj/Debug/net9.0-maccatalyst/maccatalyst-arm64/staticwebassets/msbuild.buildTransitive.PersonalJournal.props",
+      "PackagePath": "buildTransitive\\PersonalJournal.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

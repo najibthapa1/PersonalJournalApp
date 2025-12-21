@@ -1,0 +1,95 @@
+@page "/analytics"
+
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="h1">Analytics Dashboard</div>
+        <p class="sub">Insights into your journaling habits</p>
+    </div>
+
+    <!-- Date Range Filter Card -->
+    <div class="card">
+        <div class="card-pad">
+            <div class="filter-title">📅 Date Range Filter</div>
+            <div class="filter-row">
+                <div class="filter-field">
+                    <label>Start Date</label>
+                    <input type="date" />
+                </div>
+                <div class="filter-field">
+                    <label>End Date</label>
+                    <input type="date" />
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-ghost">Apply</button>
+                <button class="btn-ghost">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="badge b1">🔥</div>
+            <div class="stat-info">
+                <small>Current Streak</small>
+                <b>7 days</b>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="badge b2">📈</div>
+            <div class="stat-info">
+                <small>Longest Streak</small>
+                <b>14 days</b>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="badge b3">💚</div>
+            <div class="stat-info">
+                <small>Most Frequent Mood</small>
+                <b>Happy</b>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="badge b4">🗓️</div>
+            <div class="stat-info">
+                <small>Total Entries</small>
+                <b>23</b>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Distribution Panel -->
+    <div class="panel">
+        <div class="panel-title">Mood Distribution</div>
+        <div class="chart-container">
+            <div class="pie-chart"></div>
+            <div class="chart-legend">
+                <div class="legend-row">
+                    <span class="dot dot-pos"></span>
+                    <span>Positive: 65%</span>
+                </div>
+                <div class="legend-row">
+                    <span class="dot dot-neu"></span>
+                    <span>Neutral: 25%</span>
+                </div>
+                <div class="legend-row">
+                    <span class="dot dot-neg"></span>
+                    <span>Negative: 10%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Count Trend Panel -->
+    <div class="panel">
+        <div class="panel-title">Word Count Trend</div>
+        <div class="trend-info">Average: 156 words per entry</div>
+        <div class="chart-area">
+            <div class="trend-line"></div>
+        </div>
+    </div>
+
+</div>

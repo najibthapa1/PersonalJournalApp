@@ -1,0 +1,73 @@
+@page "/calendar"
+
+<div class="page-container">
+
+    <div class="page-header">
+        <div class="h1">Calendar</div>
+        <p class="sub">Navigate through your journal entries</p>
+    </div>
+
+    <div class="card">
+        <div class="card-pad">
+            
+            <div class="cal-head">
+                <div class="month-title">@currentDate.ToString("MMMM yyyy")</div>
+                <div class="nav-buttons">
+                    <button class="btn-ghost" @onclick="PrevMonth">‹</button>
+                    <button class="btn-ghost" @onclick="NextMonth">›</button>
+                </div>
+            </div>
+
+            <div class="cal-grid">
+                <div class="dow">Sun</div>
+                <div class="dow">Mon</div>
+                <div class="dow">Tue</div>
+                <div class="dow">Wed</div>
+                <div class="dow">Thu</div>
+                <div class="dow">Fri</div>
+                <div class="dow">Sat</div>
+
+                <!-- Empty cells before first day -->
+                @for (int i = 0; i < startOffset; i++)
+                {
+                    <div class="day empty"></div>
+                }
+
+                <!-- Days of the month -->
+                @for (int day = 1; day <= daysInMonth; day++)
+                {
+                    var isToday = (day == DateTime.Today.Day && 
+                                   currentDate.Month == DateTime.Today.Month && 
+                                   currentDate.Year == DateTime.Today.Year);
+                    <div class="day @(isToday ? "selected" : "")">@day</div>
+                }
+
+                <!-- Empty cells after last day -->
+                @for (int i = 0; i < remainingCells; i++)
+                {
+                    <div class="day empty"></div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime currentDate = DateTime.Today;
+
+    private DateTime firstDayOfMonth => new DateTime(currentDate.Year, currentDate.Month, 1);
+    private int daysInMonth => DateTime.DaysInMonth(currentDate.Year, currentDate.Month);
+    private int startOffset => (int)firstDayOfMonth.DayOfWeek;
+    private int remainingCells => (7 - ((startOffset + daysInMonth) % 7)) % 7;
+
+    private void PrevMonth()
+    {
+        currentDate = currentDate.AddMonths(-1);
+    }
+
+    private void NextMonth()
+    {
+        currentDate = currentDate.AddMonths(1);
+    }
+}

@@ -1,0 +1,57 @@
+@page "/settings"
+
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="h1">Settings</div>
+        <p class="sub">Security, export, and appearance.</p>
+    </div>
+
+    <!-- Security Section -->
+    <div class="card">
+        <div class="card-pad">
+            <div class="section-title">🔒 Security (PIN)</div>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Set PIN</label>
+                    <input type="password" placeholder="Enter 4-8 digit PIN" inputmode="numeric" />
+                    <div class="hint">If PIN is set, the app can be locked/unlocked.</div>
+                </div>
+                <div class="form-field">
+                    <label>Confirm PIN</label>
+                    <input type="password" placeholder="Re-enter PIN" inputmode="numeric" />
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button class="btn-ghost">Set PIN</button>
+                <button class="btn-ghost">Lock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="card">
+        <div class="card-pad">
+            <div class="section-title">📄 Export</div>
+            <div class="section-desc">
+                Export your journal using Print → Save as PDF (works in hybrid WebView too).
+            </div>
+            <button class="btn-ghost">Export PDF</button>
+        </div>
+    </div>
+
+    <!-- Appearance Section -->
+    <div class="card">
+        <div class="card-pad">
+            <div class="section-title">🌗 Appearance</div>
+            <div class="appearance-row">
+                <div class="section-desc">Light / Night mode</div>
+                <button class="btn-ghost">Toggle Theme</button>
+            </div>
+        </div>
+    </div>
+
+</div>
