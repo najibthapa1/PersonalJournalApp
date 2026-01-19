@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using PersonalJournal.Services.Implementation;
+using PersonalJournal.Services.Interfaces;
 using PersonalJournal.Data;
 
 namespace PersonalJournal;
@@ -18,9 +21,20 @@ public static class MauiProgram
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
 #endif
-        string dbPath = GetDatabasePath();
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "journal.db");
         
         builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+        
+        builder.Services.AddSingleton<IUserService, UserService>();
+
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IJournalService, JournalService>();
+        builder.Services.AddScoped<IMoodService, MoodService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+        builder.Services.AddScoped<IStreakService, StreakService>();
+        builder.Services.AddScoped<IThemeService, ThemeService>();
+        builder.Services.AddScoped<IExportService, ExportService>();
         var app = builder.Build();
         
         // Create database if it doesn't exist
