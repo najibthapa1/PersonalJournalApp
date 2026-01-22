@@ -1,9 +1,19 @@
+
+[data-theme="dark"] {
+    --card: #1e293b;
+    --line: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+}
+
 .topbar {
     position: sticky;
     top: 0;
     z-index: 10;
     background: var(--card);
     border-bottom: 1px solid var(--line);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
 }
 
 .topbar-inner {
@@ -14,12 +24,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
+    background: var(--card);
+    border-radius: 12px;
 }
 
 .brand {
     font-weight: 700;
     letter-spacing: .2px;
     font-size: 18px;
+    color: var(--text);
 }
 
 .tabs {
@@ -39,6 +52,7 @@
     cursor: pointer;
     text-decoration: none;
     font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .tab:hover {
@@ -47,8 +61,21 @@
 }
 
 .tab.active {
-    background: var(--navActive);
-    color: var(--navActiveText);
+    background: #000;
+    color: #fff;
+    border: 1px solid #000;
+}
+
+[data-theme="dark"] .tab.active {
+    background: #fff;
+    color: #000;
+    border: 1px solid #fff;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .icon-btn {
@@ -59,8 +86,25 @@
     padding: 8px 10px;
     cursor: pointer;
     font-size: 16px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icon-btn:hover {
     background: rgba(148, 163, 184, .18);
+}
+
+.logout-btn {
+    background: white;
+    color: black;
+}
+
+.logout-btn:hover {
+    color:black;
+}
+
+.logout-btn svg {
+    display: block;
 }
