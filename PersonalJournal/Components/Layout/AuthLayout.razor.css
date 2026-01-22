@@ -1,0 +1,29 @@
+.auth-layout {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e8eef5;;
+    padding: 20px;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 480px;
+}
+
+@media (max-width: 768px) {
+    .auth-layout {
+        padding: 15px;
+    }
+
+    .auth-container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-layout {
+        padding: 10px;
+    }
+}
