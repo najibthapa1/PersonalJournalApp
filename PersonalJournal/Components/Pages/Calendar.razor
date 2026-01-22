@@ -1,7 +1,15 @@
 @page "/calendar"
+@using PersonalJournal.Models
+@using PersonalJournal.Models.Enums
+@using PersonalJournal.Services.Interfaces
+@inject IJournalService JournalService
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Calendar - Personal Journal</PageTitle>
 
 <div class="page-container">
-
+    
     <div class="page-header">
         <div class="h1">Calendar</div>
         <p class="sub">Navigate through your journal entries</p>
@@ -11,42 +19,72 @@
         <div class="card-pad">
             
             <div class="cal-head">
+                <button class="btn-nav" @onclick="PreviousMonth">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                
                 <div class="month-title">@currentDate.ToString("MMMM yyyy")</div>
-                <div class="nav-buttons">
-                    <button class="btn-ghost" @onclick="PrevMonth">‹</button>
-                    <button class="btn-ghost" @onclick="NextMonth">›</button>
-                </div>
+                
+                <button class="btn-nav" @onclick="NextMonth">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
             </div>
 
             <div class="cal-grid">
-                <div class="dow">Sun</div>
-                <div class="dow">Mon</div>
-                <div class="dow">Tue</div>
-                <div class="dow">Wed</div>
-                <div class="dow">Thu</div>
-                <div class="dow">Fri</div>
-                <div class="dow">Sat</div>
+                <!-- Day of Week Headers -->
+                <div class="dow">SUN</div>
+                <div class="dow">MON</div>
+                <div class="dow">TUE</div>
+                <div class="dow">WED</div>
+                <div class="dow">THU</div>
+                <div class="dow">FRI</div>
+                <div class="dow">SAT</div>
 
-                <!-- Empty cells before first day -->
-                @for (int i = 0; i < startOffset; i++)
+                <!-- Calendar Days -->
+                @foreach (var day in calendarDays)
                 {
-                    <div class="day empty"></div>
+                    var isCurrentMonth = day.Month == currentDate.Month;
+                    var isToday = day.Date == DateTime.Today;
+                    var hasEntry = entryMoodMap.ContainsKey(day.Date);
+                    var moodCategory = hasEntry ? entryMoodMap[day.Date] : (MoodCategory?)null;
+                    
+                    <div class="day @(isCurrentMonth ? "" : "other-month") @(isToday ? "today" : "") @(hasEntry ? "has-entry" : "")" 
+                         @onclick="() => SelectDate(day)">
+                        <span class="day-number">@day.Day</span>
+                        @if (hasEntry && moodCategory.HasValue)
+                        {
+                            <span class="mood-indicator @GetMoodClass(moodCategory.Value)"></span>
+                        }
+                    </div>
                 }
+            </div>
 
-                <!-- Days of the month -->
-                @for (int day = 1; day <= daysInMonth; day++)
-                {
-                    var isToday = (day == DateTime.Today.Day && 
-                                   currentDate.Month == DateTime.Today.Month && 
-                                   currentDate.Year == DateTime.Today.Year);
-                    <div class="day @(isToday ? "selected" : "")">@day</div>
-                }
-
-                <!-- Empty cells after last day -->
-                @for (int i = 0; i < remainingCells; i++)
-                {
-                    <div class="day empty"></div>
-                }
+            <!-- Legend -->
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-box today-box"></div>
+                    <span class="legend-label">Today</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box has-entry-box"></div>
+                    <span class="legend-label">Has entry</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot positive-dot"></span>
+                    <span class="legend-label">Positive</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot neutral-dot"></span>
+                    <span class="legend-label">Neutral</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot negative-dot"></span>
+                    <span class="legend-label">Negative</span>
+                </div>
             </div>
 
         </div>
@@ -55,19 +93,102 @@
 
 @code {
     private DateTime currentDate = DateTime.Today;
+    private List<DateTime> calendarDays = new();
+    private Dictionary<DateTime, MoodCategory> entryMoodMap = new();
 
-    private DateTime firstDayOfMonth => new DateTime(currentDate.Year, currentDate.Month, 1);
-    private int daysInMonth => DateTime.DaysInMonth(currentDate.Year, currentDate.Month);
-    private int startOffset => (int)firstDayOfMonth.DayOfWeek;
-    private int remainingCells => (7 - ((startOffset + daysInMonth) % 7)) % 7;
-
-    private void PrevMonth()
+    protected override async Task OnInitializedAsync()
     {
-        currentDate = currentDate.AddMonths(-1);
+        // Check authentication
+        if (!UserService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        await LoadCalendar();
     }
 
-    private void NextMonth()
+    private async Task LoadCalendar()
+    {
+        try
+        {
+            // Get entries for current month
+            var entries = await JournalService.GetEntriesByMonthAsync(currentDate.Year, currentDate.Month);
+
+            // Build map of date -> primary mood category
+            entryMoodMap.Clear();
+            foreach (var entry in entries)
+            {
+                var primaryMood = entry.EntryMoods.FirstOrDefault(em => em.IsPrimary);
+                if (primaryMood != null)
+                {
+                    entryMoodMap[entry.EntryDate.Date] = primaryMood.Mood.Category;
+                }
+            }
+
+            // Generate calendar days
+            GenerateCalendarDays();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading calendar: {ex.Message}");
+        }
+    }
+
+    private void GenerateCalendarDays()
+    {
+        calendarDays.Clear();
+
+        var firstDayOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+
+        // Add days from previous month to fill the first week
+        var firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+        for (int i = firstDayOfWeek - 1; i >= 0; i--)
+        {
+            calendarDays.Add(firstDayOfMonth.AddDays(-i - 1));
+        }
+
+        // Add all days of current month
+        for (int day = 1; day <= lastDayOfMonth.Day; day++)
+        {
+            calendarDays.Add(new DateTime(currentDate.Year, currentDate.Month, day));
+        }
+
+        // Add days from next month to fill the grid (6 rows x 7 days = 42 total)
+        var remainingDays = 42 - calendarDays.Count;
+        for (int i = 1; i <= remainingDays; i++)
+        {
+            calendarDays.Add(lastDayOfMonth.AddDays(i));
+        }
+    }
+
+    private string GetMoodClass(MoodCategory category)
+    {
+        return category switch
+        {
+            MoodCategory.Positive => "mood-positive",
+            MoodCategory.Neutral => "mood-neutral",
+            MoodCategory.Negative => "mood-negative",
+            _ => ""
+        };
+    }
+
+    private void SelectDate(DateTime date)
+    {
+        // Navigate to today page (in future, you can pass date as parameter)
+        Navigation.NavigateTo("/today");
+    }
+
+    private async Task PreviousMonth()
+    {
+        currentDate = currentDate.AddMonths(-1);
+        await LoadCalendar();
+    }
+
+    private async Task NextMonth()
     {
         currentDate = currentDate.AddMonths(1);
+        await LoadCalendar();
     }
 }

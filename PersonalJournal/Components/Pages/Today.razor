@@ -1,12 +1,33 @@
 @page "/"
 @page "/today"
+@using PersonalJournal.Models
+@using PersonalJournal.Models.Enums
+@using PersonalJournal.Services.Interfaces
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ITagService TagService
+@inject IStreakService StreakService
+@inject NavigationManager Navigation
+@inject IUserService UserService
+@inject IJSRuntime JS
+
+<PageTitle>Today - Personal Journal</PageTitle>
 
 <div class="page-container">
     
-    <!-- Page Header -->
+    <!-- Page Header with Streak -->
     <div class="page-header">
-        <div class="h1">Today's Entry</div>
-        <p class="sub">One entry per day - make it count!</p>
+        <div>
+            <div class="h1">Today's Entry</div>
+            <p class="sub">One entry per day - make it count!</p>
+        </div>
+        
+        @if (currentStreak > 0)
+        {
+            <div class="streak-badge">
+                🔥 @currentStreak Day Streak
+            </div>
+        }
     </div>
 
     <!-- Main Card -->
@@ -16,65 +37,74 @@
             <!-- Entry Header -->
             <div class="entry-header">
                 <div class="date-info">
-                    <div class="date-display">Saturday, December 21, 2024</div>
-                    <div class="word-count">0 words</div>
+                    <div class="date-display">@DateTime.Today.ToString("dddd, MMMM d, yyyy")</div>
+                    <div class="word-count">@wordCount words</div>
                 </div>
-                <button class="btn">Save Entry</button>
+                <button class="btn" @onclick="SaveEntry" disabled="@isSaving">
+                    @(isSaving ? "Saving..." : "Save Entry")
+                </button>
             </div>
+
+            @if (!string.IsNullOrEmpty(saveMessage))
+            {
+                <div class="alert @(saveSuccess ? "alert-success" : "alert-error")">
+                    @saveMessage
+                </div>
+            }
 
             <!-- Title Field -->
             <div class="field">
                 <label>Title (Optional)</label>
-                <input type="text" placeholder="Give your entry a title..." />
+                <input type="text" 
+                       placeholder="Give your entry a title..." 
+                       @bind="entryTitle"
+                       maxlength="200" />
             </div>
 
-            <!-- Rich Text Editor -->
+            <!-- Quill Rich Text Editor -->
             <div class="field">
                 <label>Content</label>
-                <div class="editor">
-                    <div class="toolbar">
-                        <button class="tool">H1</button>
-                        <button class="tool">H2</button>
-                        <button class="tool"><b>B</b></button>
-                        <button class="tool"><i>I</i></button>
-                        <button class="tool">• List</button>
-                        <button class="tool">1. List</button>
-                    </div>
-                    <div class="editor-area" contenteditable="true">
-                        <span class="placeholder">Write about your day...</span>
-                    </div>
-                </div>
+                <div id="quill-editor" style="min-height: 220px;"></div>
             </div>
 
             <!-- Primary Mood -->
             <div class="field">
-                <label>Primary Mood *</label>
+                <label>Primary Mood <span style="color: #ef4444;">*</span></label>
 
                 <div class="group-title">Positive</div>
                 <div class="chips">
-                    <button class="chip">Happy</button>
-                    <button class="chip">Excited</button>
-                    <button class="chip">Relaxed</button>
-                    <button class="chip active">Grateful</button>
-                    <button class="chip">Confident</button>
+                    @foreach (var mood in positiveMoods)
+                    {
+                        <button type="button"
+                                class="chip @(selectedPrimaryMood == mood.Id ? "active" : "")"
+                                @onclick="() => SelectPrimaryMood(mood.Id)">
+                            @mood.Name
+                        </button>
+                    }
                 </div>
 
                 <div class="group-title">Neutral</div>
                 <div class="chips">
-                    <button class="chip blue">Calm</button>
-                    <button class="chip blue">Thoughtful</button>
-                    <button class="chip blue">Curious</button>
-                    <button class="chip blue">Nostalgic</button>
-                    <button class="chip blue">Bored</button>
+                    @foreach (var mood in neutralMoods)
+                    {
+                        <button type="button"
+                                class="chip blue @(selectedPrimaryMood == mood.Id ? "active" : "")"
+                                @onclick="() => SelectPrimaryMood(mood.Id)">
+                            @mood.Name
+                        </button>
+                    }
                 </div>
 
                 <div class="group-title">Negative</div>
                 <div class="chips">
-                    <button class="chip red">Sad</button>
-                    <button class="chip red">Angry</button>
-                    <button class="chip red">Stressed</button>
-                    <button class="chip red">Lonely</button>
-                    <button class="chip red">Anxious</button>
+                    @foreach (var mood in negativeMoods)
+                    {
+                        <button type="button"
+                                class="chip red @(selectedPrimaryMood == mood.Id ? "active" : "")"
+                                @onclick="() => SelectPrimaryMood(mood.Id)">
+                            @mood.Name
+                        </button>
+                    }
                 </div>
             </div>
 
@@ -82,59 +112,349 @@
             <div class="field">
                 <label>Secondary Moods (Optional - Max 2)</label>
                 <div class="chips">
-                    <button class="chip">Happy</button>
-                    <button class="chip">Excited</button>
-                    <button class="chip">Relaxed</button>
-                    <button class="chip">Grateful</button>
-                    <button class="chip">Confident</button>
-                    <button class="chip blue">Calm</button>
-                    <button class="chip blue">Thoughtful</button>
-                    <button class="chip blue">Curious</button>
-                    <button class="chip blue">Nostalgic</button>
-                    <button class="chip blue">Bored</button>
-                    <button class="chip red">Sad</button>
-                    <button class="chip red">Angry</button>
-                    <button class="chip red">Stressed</button>
-                    <button class="chip red">Lonely</button>
-                    <button class="chip red">Anxious</button>
+                    @foreach (var mood in allMoods.Where(m => m.Id != selectedPrimaryMood))
+                    {
+                        var chipClass = mood.Category == MoodCategory.Neutral ? "blue" : 
+                                       mood.Category == MoodCategory.Negative ? "red" : "";
+                        
+                        <button type="button"
+                                class="chip @chipClass @(selectedSecondaryMoods.Contains(mood.Id) ? "active" : "")"
+                                @onclick="() => ToggleSecondaryMood(mood.Id)"
+                                disabled="@(selectedSecondaryMoods.Count >= 2 && !selectedSecondaryMoods.Contains(mood.Id))">
+                            @mood.Name
+                        </button>
+                    }
                 </div>
             </div>
 
             <!-- Category -->
             <div class="field">
                 <label>Category (Optional)</label>
-                <input type="text" placeholder="e.g., Personal, Work, Life" />
+                <input type="text" 
+                       placeholder="e.g., Personal, Work, Life" 
+                       @bind="entryCategory"
+                       list="category-suggestions" />
+                <datalist id="category-suggestions">
+                    <option value="Personal"></option>
+                    <option value="Work"></option>
+                    <option value="Health"></option>
+                    <option value="Goals"></option>
+                    <option value="Dreams"></option>
+                </datalist>
             </div>
 
             <!-- Tags -->
             <div class="field">
                 <label>Tags (Optional)</label>
                 <div class="chips">
-                    <button class="chip tag-chip">Work</button>
-                    <button class="chip tag-chip">Career</button>
-                    <button class="chip tag-chip">Studies</button>
-                    <button class="chip tag-chip">Family</button>
-                    <button class="chip tag-chip">Friends</button>
-                    <button class="chip tag-chip">Relationships</button>
-                    <button class="chip tag-chip">Health</button>
-                    <button class="chip tag-chip">Fitness</button>
-                    <button class="chip tag-chip">Personal Growth</button>
-                    <button class="chip tag-chip">Self-care</button>
-                    <button class="chip tag-chip">Hobbies</button>
-                    <button class="chip tag-chip">Travel</button>
-                    <button class="chip tag-chip">Nature</button>
-                    <button class="chip tag-chip">Finance</button>
-                    <button class="chip tag-chip">Spirituality</button>
+                    @foreach (var tag in availableTags)
+                    {
+                        <button type="button"
+                                class="chip tag-chip @(selectedTags.Contains(tag.Id) ? "active" : "")"
+                                @onclick="() => ToggleTag(tag.Id)">
+                            @tag.Name
+                        </button>
+                    }
                 </div>
 
                 <div style="height: 10px"></div>
 
                 <div class="custom-tag-row">
-                    <input type="text" placeholder="Enter custom tag" />
-                    <button class="btn-ghost">+</button>
+                    <input type="text" 
+                           placeholder="Enter custom tag" 
+                           @bind="customTagInput"
+                           @onkeydown="HandleCustomTagKeyPress" />
+                    <button class="btn-ghost" type="button" @onclick="AddCustomTag">+</button>
                 </div>
+                
+                @if (!string.IsNullOrEmpty(customTagMessage))
+                {
+                    <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">@customTagMessage</p>
+                }
             </div>
 
         </div>
     </section>
 </div>
+
+@code {
+    // Entry data
+    private JournalEntry? currentEntry;
+    private string entryTitle = string.Empty;
+    private string entryContent = string.Empty;
+    private string entryCategory = string.Empty;
+    private int wordCount = 0;
+
+    // Moods
+    private List<Mood> allMoods = new();
+    private List<Mood> positiveMoods = new();
+    private List<Mood> neutralMoods = new();
+    private List<Mood> negativeMoods = new();
+    private int? selectedPrimaryMood;
+    private List<int> selectedSecondaryMoods = new();
+
+    // Tags
+    private List<Tag> availableTags = new();
+    private List<int> selectedTags = new();
+    private string customTagInput = string.Empty;
+    private string customTagMessage = string.Empty;
+
+    // UI State
+    private int currentStreak = 0;
+    private bool isSaving = false;
+    private string saveMessage = string.Empty;
+    private bool saveSuccess = false;
+    private bool quillInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check authentication
+        if (!UserService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Initialize Quill editor
+                await JS.InvokeVoidAsync("initQuill", "quill-editor");
+                quillInitialized = true;
+
+                // Set initial content if exists
+                if (!string.IsNullOrEmpty(entryContent))
+                {
+                    await JS.InvokeVoidAsync("setQuillContent", entryContent);
+                }
+
+                // Set up text change listener for word count
+                await JS.InvokeVoidAsync("eval", @"
+                    if (typeof quill !== 'undefined' && quill) {
+                        quill.on('text-change', function() {
+                            var text = quill.getText().trim();
+                            var words = text.split(/\s+/).filter(w => w.length > 0).length;
+                            DotNet.invokeMethodAsync('PersonalJournal', 'UpdateWordCountFromJS', words);
+                        });
+                    }
+                ");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing Quill: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public static void UpdateWordCountFromJS(int words)
+    {
+        // This is a placeholder - word count will be updated in SaveEntry
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            // Load moods
+            allMoods = await MoodService.GetAllMoodsAsync();
+            positiveMoods = allMoods.Where(m => m.Category == MoodCategory.Positive).ToList();
+            neutralMoods = allMoods.Where(m => m.Category == MoodCategory.Neutral).ToList();
+            negativeMoods = allMoods.Where(m => m.Category == MoodCategory.Negative).ToList();
+
+            // Load tags
+            availableTags = await TagService.GetAllTagsAsync();
+
+            // Load current entry
+            currentEntry = await JournalService.GetTodaysEntryAsync();
+
+            if (currentEntry != null)
+            {
+                // Populate form with existing entry
+                entryTitle = currentEntry.Title ?? string.Empty;
+                entryContent = currentEntry.Content;
+                entryCategory = currentEntry.Category?.Name ?? string.Empty;
+                
+                var primaryMood = currentEntry.EntryMoods.FirstOrDefault(em => em.IsPrimary);
+                if (primaryMood != null)
+                {
+                    selectedPrimaryMood = primaryMood.MoodId;
+                }
+
+                selectedSecondaryMoods = currentEntry.EntryMoods
+                    .Where(em => !em.IsPrimary)
+                    .Select(em => em.MoodId)
+                    .ToList();
+
+                selectedTags = currentEntry.EntryTags.Select(et => et.TagId).ToList();
+                
+                wordCount = currentEntry.WordCount;
+            }
+
+            // Load streak
+            currentStreak = await StreakService.GetCurrentStreakAsync();
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Error loading data: {ex.Message}";
+            saveSuccess = false;
+        }
+    }
+
+    private void SelectPrimaryMood(int moodId)
+    {
+        selectedPrimaryMood = moodId;
+        selectedSecondaryMoods.Remove(moodId);
+    }
+
+    private void ToggleSecondaryMood(int moodId)
+    {
+        if (selectedSecondaryMoods.Contains(moodId))
+        {
+            selectedSecondaryMoods.Remove(moodId);
+        }
+        else if (selectedSecondaryMoods.Count < 2)
+        {
+            selectedSecondaryMoods.Add(moodId);
+        }
+    }
+
+    private void ToggleTag(int tagId)
+    {
+        if (selectedTags.Contains(tagId))
+        {
+            selectedTags.Remove(tagId);
+        }
+        else
+        {
+            selectedTags.Add(tagId);
+        }
+    }
+
+    private async Task HandleCustomTagKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AddCustomTag();
+        }
+    }
+
+    private async Task AddCustomTag()
+    {
+        customTagMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(customTagInput))
+        {
+            return;
+        }
+
+        var (success, message, tag) = await TagService.CreateCustomTagAsync(customTagInput);
+
+        if (success && tag != null)
+        {
+            availableTags.Add(tag);
+            selectedTags.Add(tag.Id);
+            customTagInput = string.Empty;
+            customTagMessage = "✓ Tag added!";
+        }
+        else
+        {
+            customTagMessage = message;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SaveEntry()
+    {
+        saveMessage = string.Empty;
+        saveSuccess = false;
+
+        if (!quillInitialized)
+        {
+            saveMessage = "Editor not initialized yet. Please wait a moment and try again.";
+            saveSuccess = false;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            // Get content from Quill editor
+            entryContent = await JS.InvokeAsync<string>("getQuillContent");
+            
+            // Get plain text for validation and word count
+            var quillText = await JS.InvokeAsync<string>("eval", "quill.getText()");
+            var plainText = quillText?.Trim() ?? string.Empty;
+
+            // Validation - check if content is empty
+            if (string.IsNullOrWhiteSpace(plainText) || plainText.Length == 0)
+            {
+                saveMessage = "Please write something in your entry";
+                saveSuccess = false;
+                StateHasChanged();
+                return;
+            }
+
+            // Validation - check if primary mood is selected
+            if (!selectedPrimaryMood.HasValue)
+            {
+                saveMessage = "Please select a primary mood";
+                saveSuccess = false;
+                StateHasChanged();
+                return;
+            }
+
+            isSaving = true;
+            StateHasChanged();
+
+            var entry = currentEntry ?? new JournalEntry();
+            entry.Title = string.IsNullOrWhiteSpace(entryTitle) ? null : entryTitle;
+            entry.Content = entryContent;
+            entry.EntryDate = DateTime.Today;
+
+            // Combine primary and secondary moods
+            var allMoodIds = new List<int>();
+            if (selectedPrimaryMood.HasValue)
+            {
+                allMoodIds.Add(selectedPrimaryMood.Value);
+            }
+            allMoodIds.AddRange(selectedSecondaryMoods);
+
+            var (success, message, savedEntry) = await JournalService.SaveEntryAsync(
+                entry,
+                allMoodIds,
+                selectedPrimaryMood.Value,
+                selectedTags
+            );
+
+            saveMessage = success ? "✓ " + message : "❌ " + message;
+            saveSuccess = success;
+
+            if (success)
+            {
+                currentEntry = savedEntry;
+                wordCount = savedEntry?.WordCount ?? 0;
+                
+                // Reload streak
+                currentStreak = await StreakService.GetCurrentStreakAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Error: {ex.Message}";
+            saveSuccess = false;
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+}
