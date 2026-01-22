@@ -1,0 +1,279 @@
+.login-card {
+    background: white;
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.app-icon {
+    width: 80px;
+    height: 80px;
+    background: black;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.app-icon svg {
+    color: white;
+}
+
+.app-title {
+    color: black;
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
+}
+
+.app-subtitle {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0 0 32px;
+    line-height: 1.5;
+}
+
+.login-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: black;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.field-icon {
+    color: black;
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.form-input:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.validation-message {
+    color: #ef4444 !important;
+    font-size: 12px;
+    margin-top: 6px;
+    display: block;
+}
+
+.error-message {
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #ef4444 !important;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: black;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(30, 58, 95, 0.2);
+    border-top-color: #1e3a5f;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.footer-text {
+    color: black;
+    font-size: 12px;
+    margin: 20px 0 0;
+    line-height: 1.5;
+}
+
+.auth-link {
+    color: black;
+    font-size: 14px;
+    margin-top: 24px;
+}
+
+.auth-link .link {
+    color: black;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.auth-link .link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .login-card {
+        padding: 40px 32px;
+        border-radius: 20px;
+    }
+
+    .app-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+    }
+
+    .app-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .app-title {
+        font-size: 24px;
+    }
+
+    .app-subtitle {
+        font-size: 13px;
+    }
+
+    .form-input {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .btn-submit {
+        padding: 14px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 32px 24px;
+        border-radius: 16px;
+    }
+
+    .app-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+    }
+
+    .app-icon svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .app-title {
+        font-size: 22px;
+    }
+
+    .app-subtitle {
+        font-size: 12px;
+        margin-bottom: 24px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        font-size: 13px;
+    }
+
+    .form-input {
+        padding: 12px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
+    .btn-submit {
+        padding: 13px;
+        font-size: 14px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .footer-text {
+        font-size: 11px;
+        margin-top: 16px;
+    }
+
+    .auth-link {
+        font-size: 13px;
+        margin-top: 20px;
+    }
+}

@@ -1,0 +1,147 @@
+@* @page "/" *@
+@page "/register"
+@layout AuthLayout
+@using PersonalJournal.Models.DTO
+@using PersonalJournal.Services.Interfaces
+@using PersonalJournal.Components.Layout
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="register-card">
+    <!-- Icon -->
+    <div class="app-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+    </div>
+
+    <!-- Title -->
+    <h1 class="app-title">Personal Journal</h1>
+    <p class="app-subtitle">Create your account to secure your journal</p>
+
+    <!-- Registration Form -->
+    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister" class="register-form">
+        <DataAnnotationsValidator />
+
+        <!-- Error Message -->
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-message">
+                @errorMessage
+            </div>
+        }
+
+        <!-- Username Field -->
+        <div class="form-group">
+            <label class="form-label">
+                <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Username
+            </label>
+            <InputText @bind-Value="registerModel.Username" 
+                       class="form-input" 
+                       placeholder="Choose a username"
+                       maxlength="50" />
+            <ValidationMessage For="@(() => registerModel.Username)" class="validation-message" />
+        </div>
+
+        <!-- PIN Field -->
+        <div class="form-group">
+            <label class="form-label">
+                <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                PIN (4-6 digits)
+            </label>
+            <InputText @bind-Value="registerModel.Pin" 
+                       type="password" 
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       class="form-input" 
+                       placeholder="Create a 4-6 digit PIN"
+                       maxlength="6" />
+            <ValidationMessage For="@(() => registerModel.Pin)" class="validation-message" />
+        </div>
+
+        <!-- Confirm PIN Field -->
+        <div class="form-group">
+            <label class="form-label">
+                <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Confirm PIN
+            </label>
+            <InputText @bind-Value="registerModel.ConfirmPin" 
+                       type="password" 
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       class="form-input" 
+                       placeholder="Re-enter your PIN"
+                       maxlength="6" />
+            <ValidationMessage For="@(() => registerModel.ConfirmPin)" class="validation-message" />
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner"></span>
+                <span>Creating Account...</span>
+            }
+            else
+            {
+                <span>Create Account</span>
+            }
+        </button>
+    </EditForm>
+
+    <!-- Footer Text -->
+    <p class="footer-text">Your journal is stored locally and privately on this device</p>
+
+    <!-- Login Link -->
+    <div class="auth-link">
+        Already have an account? <a href="/login" class="link-text">Login here</a>
+    </div>
+</div>
+
+@code {
+    private RegisterDto registerModel = new();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var (success, message, user) = await AuthService.RegisterAsync(registerModel);
+
+            if (success && user != null)
+            {
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = message;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
