@@ -1,59 +1,613 @@
-﻿:root {
-    --bg: #f6f7fb;
-    --card: #fff;
-    --text: #0f172a;
-    --muted: #64748b;
-    --line: #e5e7eb;
-    --navActive: #0b1220;
-    --navActiveText: #eef2ff;
-    --shadow: 0 12px 30px rgba(15, 23, 42, .08);
-    --r: 14px;
-    --r2: 12px;
-    --pos: #16a34a;
-    --neu: #2563eb;
-    --neg: #ef4444;
-}
-
-[data-theme="dark"] {
-    --bg: #0b1220;
-    --card: #0f172a;
-    --text: #e5e7eb;
-    --muted: #9ca3af;
-    --line: #1f2937;
-    --navActive: #e5e7eb;
-    --navActiveText: #0b1220;
-    --shadow: 0 12px 30px rgba(0, 0, 0, .35);
-}
-
+﻿/* ===== RESET & BASE ===== */
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
     margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    background: var(--bg);
-    color: var(--text);
+    overflow-x: hidden;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.page {
-    max-width: 1150px;
-    margin: 20px auto 60px;
-    padding: 0 18px;
+#app {
+    height: 100%;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
-@supports (-webkit-touch-callout: none) {
-    .status-bar-safe-area {
-        display: flex;
-        position: sticky;
-        top: 0;
-        height: env(safe-area-inset-top);
-        background-color: #f7f7f7;
-        width: 100%;
-        z-index: 1;
+
+/* ===== CSS VARIABLES ===== */
+:root {
+    /* Light Theme Colors */
+    --bg-primary: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8eef3;
+
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --text-tertiary: #718096;
+
+    --border-color: #e2e8f0;
+    --border-hover: #cbd5e0;
+
+    --primary-bg: #3182ce;
+    --primary-hover: #2c5282;
+
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    --success-bg: #f0fff4;
+    --success-color: #22543d;
+    --success-border: #9ae6b4;
+
+    --error-bg: #fff5f5;
+    --error-color: #742a2a;
+    --error-border: #fc8181;
+
+    --focus-border: #3182ce;
+    --focus-shadow: rgba(49, 130, 206, 0.1);
+}
+
+/* Dark Theme */
+[data-theme="dark"]{
+    --bg-primary: #0f1419;
+    --bg-secondary: #1a202c;
+    --bg-tertiary: #2d3748;
+
+    --text-primary: #e2e8f0;
+    --text-secondary: #cbd5e0;
+    --text-tertiary: #a0aec0;
+
+    --border-color: #4a5568;
+    --border-hover: #718096;
+
+    --primary-bg: #4299e1;
+    --primary-hover: #3182ce;
+
+    --card-bg: #1a202c;
+    --input-bg: #2d3748;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+
+    --success-bg: #22543d;
+    --success-color: #9ae6b4;
+    --success-border: #48bb78;
+
+    --error-bg: #742a2a;
+    --error-color: #fc8181;
+    --error-border: #e53e3e;
+
+    --focus-border: #4299e1;
+    --focus-shadow: rgba(66, 153, 225, 0.2);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+}
+
+/* ===== UTILITIES ===== */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ===== FOCUS STYLES ===== */
+*:focus-visible {
+    outline: 2px solid var(--focus-border);
+    outline-offset: 2px;
+}
+
+/* ===== LOADING ANIMATION ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-
-    .flex-column, .navbar-brand {
-        padding-left: env(safe-area-inset-left);
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* ===== QUILL EDITOR THEME SUPPORT ===== */
+
+/* Light Theme Quill */
+.ql-toolbar.ql-snow {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.ql-container.ql-snow {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.ql-editor {
+    color: var(--text-primary);
+}
+
+.ql-editor.ql-blank::before {
+    color: var(--text-tertiary);
+}
+
+//* ===== DARK MODE QUILL EDITOR FIXES ===== */
+
+/* Quill Toolbar - Dark Mode */
+[data-theme="dark"] .ql-toolbar.ql-snow {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .ql-container.ql-snow {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .ql-editor {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .ql-snow .ql-stroke {
+    stroke: var(--text-primary);
+}
+
+[data-theme="dark"] .ql-snow .ql-fill {
+    fill: var(--text-primary);
+}
+
+[data-theme="dark"] .ql-snow .ql-picker-label {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .ql-snow .ql-picker-options {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .ql-toolbar.ql-snow button:hover,
+[data-theme="dark"] .ql-toolbar.ql-snow button.ql-active {
+    color: var(--primary-bg);
+}
+
+[data-theme="dark"] .ql-toolbar.ql-snow button:hover .ql-stroke,
+[data-theme="dark"] .ql-toolbar.ql-snow button.ql-active .ql-stroke {
+    stroke: var(--primary-bg);
+}
+
+[data-theme="dark"] .ql-toolbar.ql-snow button:hover .ql-fill,
+[data-theme="dark"] .ql-toolbar.ql-snow button.ql-active .ql-fill {
+    fill: var(--primary-bg);
+}
+
+/* ===== DARK MODE MOOD CHIPS ===== */
+
+/* Mood Category Labels */
+[data-theme="dark"] .group-title {
+    color: var(--text-secondary);
+}
+
+/* Mood Chips - Base (Gray background by default) */
+[data-theme="dark"] .chip {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .chip:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+/* Positive Mood Chips */
+[data-theme="dark"] .chip.active {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+}
+
+/* Neutral Mood Chips */
+[data-theme="dark"] .chip.blue {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .chip.blue.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+}
+
+/* Negative Mood Chips */
+[data-theme="dark"] .chip.red {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .chip.red.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+/* Tag Chips */
+[data-theme="dark"] .tag-chip {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .tag-chip:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .tag-chip.active {
+    background: var(--input-bg);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+/* ===== DARK MODE INPUT FIELDS (GRAY BACKGROUND) ===== */
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="date"] {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] input[type="text"]:focus,
+[data-theme="dark"] input[type="password"]:focus,
+[data-theme="dark"] input[type="date"]:focus {
+    background: var(--bg-tertiary);
+    border-color: var(--focus-border);
+    box-shadow: 0 0 0 4px var(--focus-shadow);
+}
+
+[data-theme="dark"] input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* ===== DARK MODE CARDS ===== */
+
+[data-theme="dark"] .card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .entry-card {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .entry-card:hover {
+    background: var(--bg-tertiary);
+}
+
+/* ===== DARK MODE BUTTONS ===== */
+
+[data-theme="dark"] .btn {
+    background: var(--primary-bg);
+    color: white;
+    border-color: var(--primary-bg);
+}
+
+[data-theme="dark"] .btn:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+[data-theme="dark"] .btn-ghost {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-hover);
+}
+
+/* ===== DARK MODE SEARCH/FILTER COMPONENTS ===== */
+
+[data-theme="dark"] .searchwrap {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .searchwrap input {
+    background: transparent;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .search-icon {
+    color: var(--text-tertiary);
+}
+
+/* ===== DARK MODE TEXT EDITOR ===== */
+
+[data-theme="dark"] .editor {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .toolbar {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .tool {
+    background: var(--card-bg);
+    border-color: transparent;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .tool:hover {
+    border-color: var(--border-color);
+    background: var(--input-bg);
+}
+
+[data-theme="dark"] .editor-area {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .placeholder {
+    color: var(--text-tertiary);
+}
+
+/* ===== DARK MODE CALENDAR ===== */
+
+[data-theme="dark"] .day {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .day:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-hover);
+}
+
+[data-theme="dark"] .day.selected {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-bg);
+}
+
+[data-theme="dark"] .day.empty {
+    border-color: transparent;
+    background: transparent;
+}
+
+/* ===== DARK MODE ANALYTICS ===== */
+
+[data-theme="dark"] .stat-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .panel {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .chart-area {
+    background: var(--bg-tertiary);
+}
+
+/* ===== DARK MODE TYPOGRAPHY ===== */
+
+[data-theme="dark"] .h1,
+[data-theme="dark"] h1 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .sub,
+[data-theme="dark"] .section-desc {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] label {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .hint {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .panel-title,
+[data-theme="dark"] .filter-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .date-display,
+[data-theme="dark"] .month-title,
+[data-theme="dark"] .entry-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .word-count,
+[data-theme="dark"] .meta,
+[data-theme="dark"] .meta-item {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .entry-preview {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .trend-info {
+    color: var(--text-secondary);
+}
+
+/* Mood Pills/Badges */
+[data-theme="dark"] .pill {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Stats Info */
+[data-theme="dark"] .stat-info small {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .stat-info b {
+    color: var(--text-primary);
+}
+
+/* Empty States */
+[data-theme="dark"] .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* Dot indicators */
+[data-theme="dark"] .dot-pos {
+    background: #4ade80;
+}
+
+[data-theme="dark"] .dot-neu {
+    background: #60a5fa;
+}
+
+[data-theme="dark"] .dot-neg {
+    background: #f87171;
+}
+
+/* ===== OVERRIDE LIGHT MODE HOVER EFFECTS IN DARK MODE ===== */
+
+/* Remove all chip hover effects in dark mode */
+[data-theme="dark"] .chip:hover {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Keep active chip styles even on hover */
+[data-theme="dark"] .chip.active:hover {
+    background: rgba(34, 197, 94, 0.2) !important;
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .chip.blue.active:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .chip.red.active:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #f87171 !important;
+}
+
+/* Remove tag chip hover effects */
+[data-theme="dark"] .tag-chip:hover {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .tag-chip.active:hover {
+    background: var(--input-bg) !important;
+    border-color: var(--border-hover) !important;
+}
+
+/* Remove entry card hover in timeline */
+[data-theme="dark"] .entry-card:hover {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ===== FIX INPUT FIELDS TO BE GRAY ===== */
+
+/* Override any existing styles for inputs */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] textarea {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input[type="text"]:focus,
+[data-theme="dark"] input[type="password"]:focus,
+[data-theme="dark"] input[type="date"]:focus,
+[data-theme="dark"] textarea:focus {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--focus-border) !important;
+}
+
+/* ===== FIX SPECIFIC PAGE COMPONENTS ===== */
+
+/* Today Page - Title and Content fields */
+[data-theme="dark"] .field input[type="text"] {
+    background: var(--bg-tertiary) !important;
+}
+
+/* Custom Tag Input */
+[data-theme="dark"] .custom-tag-row input {
+    background: var(--bg-tertiary) !important;
+}
+
+/* Timeline Search Input */
+[data-theme="dark"] .searchwrap input {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+/* Filter inputs in Analytics */
+[data-theme="dark"] .filter-field input {
+    background: var(--bg-tertiary) !important;
+}
+
+/* Settings inputs */
+[data-theme="dark"] .form-field input {
+    background: var(--bg-tertiary) !important;
+}
