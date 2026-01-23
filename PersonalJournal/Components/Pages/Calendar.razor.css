@@ -23,13 +23,13 @@
 .card {
     background: var(--card);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
     width: 100%;
 }
 
 .card-pad {
-    padding: 24px;
+    padding: 32px;
 }
 
 .cal-head {
@@ -37,33 +37,33 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
 }
 
 .month-title {
-    font-size: 22px;
-    font-weight: 900;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
 }
 
-.nav-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-}
-
-.btn-ghost {
+.btn-nav {
+    width: 44px;
+    height: 44px;
     border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text);
+    background: var(--card);
     border-radius: 10px;
-    padding: 10px 16px;
-    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-size: 16px;
+    transition: all 0.2s ease;
+    color: var(--text);
 }
 
-.btn-ghost:hover {
-    background: rgba(148, 163, 184, .12);
+.btn-nav:hover {
+    background: rgba(148, 163, 184, .08);
+    border-color: rgba(148, 163, 184, .5);
 }
 
 .cal-grid {
@@ -75,67 +75,255 @@
 
 .dow {
     color: var(--muted);
-    font-weight: 900;
+    font-weight: 700;
     text-align: center;
-    font-size: 14px;
+    font-size: 12px;
     padding: 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .day {
     aspect-ratio: 1 / 1;
-    min-height: 80px;
-    border: 2px solid var(--line);
-    border-radius: 14px;
-    background: transparent;
+    min-height: 90px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    background: var(--card);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    font-size: 18px;
+    font-weight: 600;
+    font-size: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .day:hover {
-    background: rgba(148, 163, 184, .10);
-    border-color: rgba(148, 163, 184, .5);
+    background: rgba(148, 163, 184, .03);
 }
 
-.day.empty {
-    border-color: transparent;
-    cursor: default;
-    background: transparent;
+.day.other-month {
+    opacity: 0.25;
+    color: var(--muted);
+    border-color: #f3f4f6;
 }
 
-.day.empty:hover {
-    background: transparent;
+.day.other-month:hover {
+    opacity: 0.3;
 }
 
-.day.selected {
-    border-color: rgba(37, 99, 235, .8);
-    background: rgba(37, 99, 235, .10);
+.day.today {
+    border: 2.5px solid #3b82f6;
+    background: var(--card);
 }
 
-@@media (max-width: 768px) {
+.day.has-entry {
+    border: 1.5px solid #1f2937;
+    background: var(--card);
+}
+
+.day-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.day.other-month .day-number {
+    color: var(--muted);
+}
+
+/* Mood Indicators */
+.mood-indicator {
+    position: absolute;
+    bottom: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.mood-indicator.mood-positive {
+    background: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, .2);
+}
+
+.mood-indicator.mood-neutral {
+    background: #eab308;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, .2);
+}
+
+.mood-indicator.mood-negative {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, .2);
+}
+
+/* Calendar Legend */
+.calendar-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid #e5e7eb;
+    background: var(--card);
+}
+
+.today-box {
+    border: 2.5px solid #3b82f6;
+    background: var(--card);
+}
+
+.has-entry-box {
+    border: 1.5px solid #1f2937;
+    background: var(--card);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.positive-dot {
+    background: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, .2);
+}
+
+.neutral-dot {
+    background: #eab308;
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, .2);
+}
+
+.negative-dot {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, .2);
+}
+
+.legend-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-pad {
+        padding: 24px;
+    }
+
+    .cal-head {
+        margin-bottom: 24px;
+    }
+
+    .month-title {
+        font-size: 20px;
+    }
+
+    .btn-nav {
+        width: 40px;
+        height: 40px;
+    }
+
     .day {
-        min-height: 60px;
+        min-height: 70px;
         font-size: 14px;
     }
+
+    .day-number {
+        font-size: 14px;
+    }
+
+    .cal-grid {
+        gap: 10px;
+    }
+
+    .mood-indicator {
+        width: 7px;
+        height: 7px;
+        bottom: 8px;
+    }
+
+    .calendar-legend {
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-pad {
+        padding: 20px;
+    }
+
+    .cal-head {
+        margin-bottom: 20px;
+    }
+
+    .month-title {
+        font-size: 18px;
+    }
+
+    .btn-nav {
+        width: 36px;
+        height: 36px;
+    }
+
+    .day {
+        min-height: 55px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .day-number {
+        font-size: 13px;
+    }
+
     .cal-grid {
         gap: 8px;
     }
-}
 
-@@media (max-width: 480px) {
-    .day {
-        min-height: 45px;
-        font-size: 12px;
-        border-radius: 10px;
-    }
-    .cal-grid {
-        gap: 6px;
-    }
     .dow {
+        font-size: 11px;
+        padding: 10px 0;
+    }
+
+    .mood-indicator {
+        width: 6px;
+        height: 6px;
+        bottom: 6px;
+    }
+
+    .calendar-legend {
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 16px;
+    }
+
+    .legend-label {
         font-size: 12px;
+    }
+
+    .legend-box {
+        width: 16px;
+        height: 16px;
+    }
+
+    .legend-dot {
+        width: 8px;
+        height: 8px;
     }
 }

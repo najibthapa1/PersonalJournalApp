@@ -1,4 +1,13 @@
 @page "/analytics"
+@using PersonalJournal.Services.Interfaces
+@using PersonalJournal.Models.DTO
+@using PersonalJournal.Models.Enums
+@inject IAnalyticsService AnalyticsService
+@inject IStreakService StreakService
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Analytics - Personal Journal</PageTitle>
 
 <div class="page-container">
 
@@ -15,81 +24,257 @@
             <div class="filter-row">
                 <div class="filter-field">
                     <label>Start Date</label>
-                    <input type="date" />
+                    <input type="date" @bind="startDate" />
                 </div>
                 <div class="filter-field">
                     <label>End Date</label>
-                    <input type="date" />
+                    <input type="date" @bind="endDate" />
                 </div>
             </div>
             <div class="filter-actions">
-                <button class="btn-ghost">Apply</button>
-                <button class="btn-ghost">Clear</button>
+                <button class="btn-ghost" @onclick="ApplyFilters">Apply</button>
+                <button class="btn-ghost" @onclick="ClearFilters">Clear</button>
             </div>
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="badge b1">🔥</div>
-            <div class="stat-info">
-                <small>Current Streak</small>
-                <b>7 days</b>
+    @if (isLoading)
+    {
+        <div class="card">
+            <div class="card-pad">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading analytics...</p>
+                </div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="badge b2">📈</div>
-            <div class="stat-info">
-                <small>Longest Streak</small>
-                <b>14 days</b>
+    }
+    else
+    {
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="badge b1">🔥</div>
+                <div class="stat-info">
+                    <small>Current Streak</small>
+                    <b>@currentStreak days</b>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="badge b2">📈</div>
+                <div class="stat-info">
+                    <small>Longest Streak</small>
+                    <b>@longestStreak days</b>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="badge b3">💚</div>
+                <div class="stat-info">
+                    <small>Most Frequent Mood</small>
+                    <b>@(string.IsNullOrEmpty(mostFrequentMood) ? "N/A" : mostFrequentMood)</b>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="badge b4">🗓️</div>
+                <div class="stat-info">
+                    <small>Total Entries</small>
+                    <b>@moodDistribution.TotalEntries</b>
+                </div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="badge b3">💚</div>
-            <div class="stat-info">
-                <small>Most Frequent Mood</small>
-                <b>Happy</b>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="badge b4">🗓️</div>
-            <div class="stat-info">
-                <small>Total Entries</small>
-                <b>23</b>
-            </div>
-        </div>
-    </div>
 
-    <!-- Mood Distribution Panel -->
-    <div class="panel">
-        <div class="panel-title">Mood Distribution</div>
-        <div class="chart-container">
-            <div class="pie-chart"></div>
-            <div class="chart-legend">
-                <div class="legend-row">
-                    <span class="dot dot-pos"></span>
-                    <span>Positive: 65%</span>
+        <!-- Mood Distribution Panel -->
+        <div class="panel">
+            <div class="panel-title">Mood Distribution</div>
+            
+            @if (moodDistribution.TotalEntries > 0)
+            {
+                <div class="chart-container">
+                    <div class="pie-chart" style="background: conic-gradient(
+                        #16a34a 0deg @(moodDistribution.PositivePercentage * 3.6)deg,
+                        #eab308 @(moodDistribution.PositivePercentage * 3.6)deg @((moodDistribution.PositivePercentage + moodDistribution.NeutralPercentage) * 3.6)deg,
+                        #dc2626 @((moodDistribution.PositivePercentage + moodDistribution.NeutralPercentage) * 3.6)deg 360deg
+                    );"></div>
+                    <div class="chart-legend">
+                        <div class="legend-row">
+                            <span class="dot dot-pos"></span>
+                            <span>Positive: @moodDistribution.PositivePercentage% (@moodDistribution.PositiveCount entries)</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="dot dot-neu"></span>
+                            <span>Neutral: @moodDistribution.NeutralPercentage% (@moodDistribution.NeutralCount entries)</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="dot dot-neg"></span>
+                            <span>Negative: @moodDistribution.NegativePercentage% (@moodDistribution.NegativeCount entries)</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="legend-row">
-                    <span class="dot dot-neu"></span>
-                    <span>Neutral: 25%</span>
+            }
+            else
+            {
+                <div class="empty-chart">
+                    <p>No mood data available for the selected date range</p>
                 </div>
-                <div class="legend-row">
-                    <span class="dot dot-neg"></span>
-                    <span>Negative: 10%</span>
-                </div>
-            </div>
+            }
         </div>
-    </div>
 
-    <!-- Word Count Trend Panel -->
-    <div class="panel">
-        <div class="panel-title">Word Count Trend</div>
-        <div class="trend-info">Average: 156 words per entry</div>
-        <div class="chart-area">
-            <div class="trend-line"></div>
+        <!-- Most Used Tags Panel -->
+        <div class="panel">
+            <div class="panel-title">Most Used Tags</div>
+            
+            @if (mostUsedTags.Any())
+            {
+                <div class="tags-list">
+                    @foreach (var tag in mostUsedTags.Take(10))
+                    {
+                        <div class="tag-row">
+                            <div class="tag-info">
+                                <span class="tag-name">@tag.TagName</span>
+                                <span class="tag-count">@tag.UsageCount uses (@tag.Percentage%)</span>
+                            </div>
+                            <div class="tag-bar-container">
+                                <div class="tag-bar" style="width: @tag.Percentage%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-chart">
+                    <p>No tags data available for the selected date range</p>
+                </div>
+            }
         </div>
-    </div>
+
+        <!-- Word Count Trend Panel -->
+        <div class="panel">
+            <div class="panel-title">Word Count Trend</div>
+            <div class="trend-info">Average: @averageWordCount words per entry</div>
+            
+            @if (wordCountTrend.Any())
+            {
+                <div class="word-count-chart">
+                    <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+                        @{
+                            var maxWords = wordCountTrend.Max(w => w.WordCount);
+                            if (maxWords == 0) maxWords = 1; // Prevent division by zero
+                            
+                            var points = new List<string>();
+                            for (int i = 0; i < wordCountTrend.Count; i++)
+                            {
+                                var x = (i * 100.0 / Math.Max(wordCountTrend.Count - 1, 1));
+                                var y = 40 - (wordCountTrend[i].WordCount * 35.0 / maxWords);
+                                points.Add($"{x:F2},{y:F2}");
+                            }
+                            var polylinePoints = string.Join(" ", points);
+                        }
+                        
+                        <!-- Grid lines -->
+                        <line x1="0" y1="10" x2="100" y2="10" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
+                        <line x1="0" y1="20" x2="100" y2="20" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
+                        <line x1="0" y1="30" x2="100" y2="30" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
+                        
+                        <!-- Area fill -->
+                        <polygon points="@polylinePoints 100,40 0,40" fill="#3b82f6" opacity="0.1"></polygon>
+                        
+                        <!-- Line -->
+                        <polyline points="@polylinePoints" fill="none" stroke="#3b82f6" stroke-width="0.5"></polyline>
+                        
+                        <!-- Points -->
+                        @for (int i = 0; i < wordCountTrend.Count; i++)
+                        {
+                            var x = (i * 100.0 / Math.Max(wordCountTrend.Count - 1, 1));
+                            var y = 40 - (wordCountTrend[i].WordCount * 35.0 / maxWords);
+                            <circle cx="@x" cy="@y" r="0.5" fill="#3b82f6"></circle>
+                        }
+                    </svg>
+                </div>
+                
+                <div class="chart-footer">
+                    <span class="chart-date">@wordCountTrend.First().Date.ToString("MMM d")</span>
+                    <span class="chart-date">@wordCountTrend.Last().Date.ToString("MMM d")</span>
+                </div>
+            }
+            else
+            {
+                <div class="empty-chart">
+                    <p>No word count data available for the selected date range</p>
+                </div>
+            }
+        </div>
+    }
 
 </div>
+
+@code {
+    // Filters
+    private DateTime? startDate;
+    private DateTime? endDate;
+
+    // Stats
+    private int currentStreak = 0;
+    private int longestStreak = 0;
+    private string? mostFrequentMood;
+    private double averageWordCount = 0;
+
+    // Charts data
+    private MoodDistributionDto moodDistribution = new();
+    private List<TagUsageDto> mostUsedTags = new();
+    private List<WordCountDto> wordCountTrend = new();
+
+    // UI State
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check authentication
+        if (!UserService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        await LoadAnalytics();
+    }
+
+    private async Task LoadAnalytics()
+    {
+        isLoading = true;
+
+        try
+        {
+            // Load streaks (not affected by date filter)
+            currentStreak = await StreakService.GetCurrentStreakAsync();
+            longestStreak = await StreakService.GetLongestStreakAsync();
+
+            // Load filtered analytics
+            moodDistribution = await AnalyticsService.GetMoodDistributionAsync(startDate, endDate);
+            mostFrequentMood = await AnalyticsService.GetMostFrequentMoodAsync(startDate, endDate);
+            mostUsedTags = await AnalyticsService.GetMostUsedTagsAsync(startDate, endDate);
+            wordCountTrend = await AnalyticsService.GetWordCountTrendAsync(startDate, endDate);
+            averageWordCount = await AnalyticsService.GetAverageWordCountAsync(startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading analytics: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadAnalytics();
+    }
+
+    private async Task ClearFilters()
+    {
+        startDate = null;
+        endDate = null;
+        await LoadAnalytics();
+    }
+}

@@ -1,11 +1,21 @@
 @page "/timeline"
+@using PersonalJournal.Models
+@using PersonalJournal.Models.Enums
+@using PersonalJournal.Services.Interfaces
+@using System.Text.RegularExpressions
+@inject IJournalService JournalService
+@inject IMoodService MoodService
+@inject ITagService TagService
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Timeline - Personal Journal</PageTitle>
 
 <div class="page-container">
-
-    <!-- Page Header -->
+    
     <div class="page-header">
         <div class="h1">All Entries</div>
-        <p class="sub">5 of 5 entries</p>
+        <p class="sub">@filteredEntries.Count of @totalEntries entries</p>
     </div>
 
     <!-- Search Bar Card -->
@@ -14,55 +24,335 @@
             <div class="searchbar">
                 <div class="searchwrap">
                     <span class="search-icon">🔍</span>
-                    <input type="text" placeholder="Search entries by title or content..." />
+                    <input type="text" 
+                           placeholder="Search entries by title or content..." 
+                           @bind="searchTerm"
+                           @oninput="HandleSearchInput" />
                 </div>
-                <button class="btn-ghost">Filters</button>
+                <button class="btn-ghost" @onclick="ToggleFilters">
+                    @(showFilters ? "Hide Filters" : "Show Filters")
+                </button>
             </div>
+
+            @if (showFilters)
+            {
+                <div class="filters-section">
+                    <!-- Date Range Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range</label>
+                        <div class="date-inputs">
+                            <input type="date" @bind="filterStartDate" @oninput="ApplyFilters" />
+                            <span class="date-separator">to</span>
+                            <input type="date" @bind="filterEndDate" @oninput="ApplyFilters" />
+                        </div>
+                    </div>
+
+                    <!-- Mood Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Filter by Mood</label>
+                        <div class="chips">
+                            <button type="button"
+                                    class="chip @(selectedMoodCategories.Contains(MoodCategory.Positive) ? "active" : "")"
+                                    @onclick="() => ToggleMoodCategoryFilter(MoodCategory.Positive)">
+                                Positive
+                            </button>
+                            <button type="button"
+                                    class="chip blue @(selectedMoodCategories.Contains(MoodCategory.Neutral) ? "active" : "")"
+                                    @onclick="() => ToggleMoodCategoryFilter(MoodCategory.Neutral)">
+                                Neutral
+                            </button>
+                            <button type="button"
+                                    class="chip red @(selectedMoodCategories.Contains(MoodCategory.Negative) ? "active" : "")"
+                                    @onclick="() => ToggleMoodCategoryFilter(MoodCategory.Negative)">
+                                Negative
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tag Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Filter by Tags</label>
+                        <div class="chips">
+                            @foreach (var tag in allTags.Take(15))
+                            {
+                                <button type="button"
+                                        class="chip tag-chip @(selectedTagIds.Contains(tag.Id) ? "active" : "")"
+                                        @onclick="() => ToggleTagFilter(tag.Id)">
+                                    @tag.Name
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Clear Filters -->
+                    <div class="filter-actions">
+                        <button class="btn-ghost" @onclick="ClearAllFilters">Clear All Filters</button>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 
-    <!-- Spacer -->
     <div class="spacer"></div>
 
-    <!-- Entries List Card -->
-    <div class="card">
-        <div class="card-pad">
-            <div class="entries-list">
-
-                <!-- Entry 1 -->
-                <div class="entry-card">
-                    <div class="entry-title">Building My Journal App</div>
-                    <div class="meta">
-                        <span class="meta-item">📅 Sat, Dec 21, 2024</span>
-                        <span class="pill">
-                            <span class="dot dot-pos"></span>
-                            Happy
-                        </span>
-                    </div>
-                    <div class="entry-preview">
-                        Today I started working on the frontend of my journal application...
-                    </div>
+    @if (isLoading)
+    {
+        <div class="card">
+            <div class="card-pad">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading entries...</p>
                 </div>
-
-                <!-- Entry 2 -->
-                <div class="entry-card">
-                    <div class="entry-title">Sunday Relaxation</div>
-                    <div class="meta">
-                        <span class="meta-item">📅 Fri, Dec 20, 2024</span>
-                        <span class="pill">
-                            <span class="dot dot-pos"></span>
-                            Relaxed
-                        </span>
-                    </div>
-                    <div class="entry-preview">
-                        Spent the day reading and watching movies. Very peaceful...
-                    </div>
-                </div>
-
-             
-
             </div>
         </div>
-    </div>
+    }
+    else if (!filteredEntries.Any())
+    {
+        <div class="card">
+            <div class="card-pad">
+                <div class="empty-state">
+                    📝
+                    <p>@(allEntries.Any() ? "No entries match your filters" : "No entries yet. Start journaling!")</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Entries List Card -->
+        <div class="card">
+            <div class="card-pad">
+                <div class="entries-list">
+                    @foreach (var entry in filteredEntries)
+                    {
+                        <div class="entry-card" @onclick="() => ViewEntry(entry)">
+                            <div class="entry-title">@(string.IsNullOrWhiteSpace(entry.Title) ? "Untitled Entry" : entry.Title)</div>
+                            
+                            <div class="meta">
+                                <span class="meta-item">📅 @entry.EntryDate.ToString("ddd, MMM d, yyyy")</span>
+                                
+                                @if (entry.EntryMoods.Any(em => em.IsPrimary))
+                                {
+                                    var primaryMood = entry.EntryMoods.First(em => em.IsPrimary).Mood;
+                                    <span class="pill">
+                                        <span class="dot @GetMoodDotClass(primaryMood.Category)"></span>
+                                        @primaryMood.Name
+                                    </span>
+                                }
 
+                                <span class="meta-item">@entry.WordCount words</span>
+                            </div>
+
+                            <div class="entry-preview">@GetPreview(entry.Content)</div>
+
+                            @if (entry.EntryTags.Any())
+                            {
+                                <div class="entry-tags">
+                                    @foreach (var tag in entry.EntryTags.Take(5))
+                                    {
+                                        <span class="entry-tag">@tag.Tag.Name</span>
+                                    }
+                                    @if (entry.EntryTags.Count > 5)
+                                    {
+                                        <span class="tag-more">+@(entry.EntryTags.Count - 5) more</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+@code {
+    // All entries
+    private List<JournalEntry> allEntries = new();
+    private List<JournalEntry> filteredEntries = new();
+    private int totalEntries = 0;
+
+    // Filters
+    private string searchTerm = string.Empty;
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+    private List<MoodCategory> selectedMoodCategories = new();
+    private List<int> selectedTagIds = new();
+    private bool showFilters = false;
+
+    // Reference data
+    private List<Mood> allMoods = new();
+    private List<Tag> allTags = new();
+
+    // UI State
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check authentication
+        if (!UserService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+
+        try
+        {
+            // Load all entries
+            allEntries = await JournalService.GetAllEntriesAsync();
+            totalEntries = allEntries.Count;
+
+            // Load moods and tags for filters
+            allMoods = await MoodService.GetAllMoodsAsync();
+            allTags = await TagService.GetAllTagsAsync();
+
+            // Apply initial filter
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading timeline: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void HandleSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void ToggleFilters()
+    {
+        showFilters = !showFilters;
+    }
+
+    private void ToggleMoodCategoryFilter(MoodCategory category)
+    {
+        if (selectedMoodCategories.Contains(category))
+        {
+            selectedMoodCategories.Remove(category);
+        }
+        else
+        {
+            selectedMoodCategories.Add(category);
+        }
+        ApplyFilters();
+    }
+
+    private void ToggleTagFilter(int tagId)
+    {
+        if (selectedTagIds.Contains(tagId))
+        {
+            selectedTagIds.Remove(tagId);
+        }
+        else
+        {
+            selectedTagIds.Add(tagId);
+        }
+        ApplyFilters();
+    }
+
+    private void ClearAllFilters()
+    {
+        searchTerm = string.Empty;
+        filterStartDate = null;
+        filterEndDate = null;
+        selectedMoodCategories.Clear();
+        selectedTagIds.Clear();
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredEntries = allEntries;
+
+        // Filter by search term
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var lowerSearch = searchTerm.ToLower();
+            filteredEntries = filteredEntries.Where(e =>
+                (e.Title != null && e.Title.ToLower().Contains(lowerSearch)) ||
+                StripHtml(e.Content).ToLower().Contains(lowerSearch)
+            ).ToList();
+        }
+
+        // Filter by date range
+        if (filterStartDate.HasValue)
+        {
+            filteredEntries = filteredEntries.Where(e => e.EntryDate.Date >= filterStartDate.Value.Date).ToList();
+        }
+
+        if (filterEndDate.HasValue)
+        {
+            filteredEntries = filteredEntries.Where(e => e.EntryDate.Date <= filterEndDate.Value.Date).ToList();
+        }
+
+        // Filter by mood categories
+        if (selectedMoodCategories.Any())
+        {
+            filteredEntries = filteredEntries.Where(e =>
+                e.EntryMoods.Any(em => em.IsPrimary && selectedMoodCategories.Contains(em.Mood.Category))
+            ).ToList();
+        }
+
+        // Filter by tags
+        if (selectedTagIds.Any())
+        {
+            filteredEntries = filteredEntries.Where(e =>
+                e.EntryTags.Any(et => selectedTagIds.Contains(et.TagId))
+            ).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetPreview(string htmlContent)
+    {
+        if (string.IsNullOrWhiteSpace(htmlContent))
+            return "No content";
+
+        var plainText = StripHtml(htmlContent);
+        return plainText.Length > 150 ? plainText.Substring(0, 150) + "..." : plainText;
+    }
+
+    private string StripHtml(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+            return string.Empty;
+
+        // Remove HTML tags
+        var text = Regex.Replace(html, "<.*?>", " ");
+        
+        // Replace multiple spaces with single space
+        text = Regex.Replace(text, @"\s+", " ");
+        
+        return text.Trim();
+    }
+
+    private string GetMoodDotClass(MoodCategory category)
+    {
+        return category switch
+        {
+            MoodCategory.Positive => "dot-pos",
+            MoodCategory.Neutral => "dot-neu",
+            MoodCategory.Negative => "dot-neg",
+            _ => ""
+        };
+    }
+
+    private void ViewEntry(JournalEntry entry)
+    {
+        Navigation.NavigateTo("/today");
+    }
+}

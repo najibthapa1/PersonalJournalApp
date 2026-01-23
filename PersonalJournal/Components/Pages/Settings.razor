@@ -1,4 +1,14 @@
 @page "/settings"
+@using PersonalJournal.Services.Interfaces
+@using PersonalJournal.Models.Enums
+@inject IUserService UserService
+@inject IAuthService AuthService
+@inject IExportService ExportService
+@inject IThemeService ThemeService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Settings - Personal Journal</PageTitle>
 
 <div class="page-container">
 
@@ -8,26 +18,42 @@
         <p class="sub">Security, export, and appearance.</p>
     </div>
 
-    <!-- Security Section -->
+    <!-- Change PIN Section -->
     <div class="card">
         <div class="card-pad">
-            <div class="section-title">🔒 Security (PIN)</div>
+            <div class="section-title">🔒 Change PIN</div>
+
+            @if (!string.IsNullOrEmpty(pinMessage))
+            {
+                <div class="alert @(pinSuccess ? "alert-success" : "alert-error")">
+                    @pinMessage
+                </div>
+            }
 
             <div class="form-grid">
                 <div class="form-field">
-                    <label>Set PIN</label>
-                    <input type="password" placeholder="Enter 4-8 digit PIN" inputmode="numeric" />
-                    <div class="hint">If PIN is set, the app can be locked/unlocked.</div>
+                    <label>New PIN</label>
+                    <input type="password" 
+                           placeholder="Enter 4-6 digit PIN" 
+                           inputmode="numeric"
+                           maxlength="6"
+                           @bind="newPin" />
+                    <div class="hint">Must be 4-6 digits</div>
                 </div>
                 <div class="form-field">
                     <label>Confirm PIN</label>
-                    <input type="password" placeholder="Re-enter PIN" inputmode="numeric" />
+                    <input type="password" 
+                           placeholder="Re-enter PIN" 
+                           inputmode="numeric"
+                           maxlength="6"
+                           @bind="confirmPin" />
                 </div>
             </div>
 
             <div class="button-row">
-                <button class="btn-ghost">Set PIN</button>
-                <button class="btn-ghost">Lock</button>
+                <button class="btn-ghost" @onclick="ChangePin" disabled="@isChangingPin">
+                    @(isChangingPin ? "Changing..." : "Change PIN")
+                </button>
             </div>
         </div>
     </div>
@@ -35,11 +61,38 @@
     <!-- Export Section -->
     <div class="card">
         <div class="card-pad">
-            <div class="section-title">📄 Export</div>
+            <div class="section-title">📄 Export to PDF</div>
+            
+            @if (!string.IsNullOrEmpty(exportMessage))
+            {
+                <div class="alert @(exportSuccess ? "alert-success" : "alert-error")">
+                    @exportMessage
+                </div>
+            }
+
             <div class="section-desc">
-                Export your journal using Print → Save as PDF (works in hybrid WebView too).
+                Export your journal entries to PDF with optional date range filter.
             </div>
-            <button class="btn-ghost">Export PDF</button>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Start Date (Optional)</label>
+                    <input type="date" @bind="exportStartDate" />
+                </div>
+                <div class="form-field">
+                    <label>End Date (Optional)</label>
+                    <input type="date" @bind="exportEndDate" />
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button class="btn-ghost" @onclick="ExportPdf" disabled="@isExporting">
+                    @(isExporting ? "Exporting..." : "Export PDF")
+                </button>
+                <button class="btn-ghost" @onclick="ClearExportDates">
+                    Clear Dates
+                </button>
+            </div>
         </div>
     </div>
 
@@ -48,10 +101,208 @@
         <div class="card-pad">
             <div class="section-title">🌗 Appearance</div>
             <div class="appearance-row">
-                <div class="section-desc">Light / Night mode</div>
-                <button class="btn-ghost">Toggle Theme</button>
+                <div>
+                    <div class="section-desc">Theme Mode</div>
+                    <div class="hint">Currently: <strong>@currentTheme</strong></div>
+                </div>
+                <button class="btn-ghost" @onclick="ToggleTheme" disabled="@isTogglingTheme">
+                    @(isTogglingTheme ? "Changing..." : "Toggle Theme")
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- User Info Section -->
+    <div class="card">
+        <div class="card-pad">
+            <div class="section-title">👤 Account</div>
+            <div class="user-info">
+                <p><strong>Username:</strong> @UserService.CurrentUser?.Username</p>
+                <p><strong>Member since:</strong> @UserService.CurrentUser?.CreatedAt.ToString("MMMM d, yyyy")</p>
+            </div>
+            <button class="btn-ghost btn-logout" @onclick="Logout">
+                Logout
+            </button>
+        </div>
+    </div>
+
 </div>
+
+@code {
+    // PIN Change
+    private string newPin = string.Empty;
+    private string confirmPin = string.Empty;
+    private bool isChangingPin = false;
+    private string pinMessage = string.Empty;
+    private bool pinSuccess = false;
+
+    // Export
+    private DateTime? exportStartDate;
+    private DateTime? exportEndDate;
+    private bool isExporting = false;
+    private string exportMessage = string.Empty;
+    private bool exportSuccess = false;
+
+    // Theme
+    private string currentTheme = "Light";
+    private bool isTogglingTheme = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check authentication
+        if (!UserService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        // Load current theme
+        await LoadCurrentTheme();
+
+        // Subscribe to theme changes
+        ThemeService.OnThemeChanged += HandleThemeChanged;
+    }
+
+    private async Task LoadCurrentTheme()
+    {
+        var theme = await ThemeService.GetCurrentThemeAsync();
+        currentTheme = theme.ToString();
+        await ApplyTheme(theme);
+    }
+
+    private async Task ChangePin()
+    {
+        pinMessage = string.Empty;
+        pinSuccess = false;
+
+        // Validation
+        if (string.IsNullOrWhiteSpace(newPin) || string.IsNullOrWhiteSpace(confirmPin))
+        {
+            pinMessage = "Please enter both PIN fields";
+            return;
+        }
+
+        if (newPin != confirmPin)
+        {
+            pinMessage = "PINs do not match";
+            return;
+        }
+
+        isChangingPin = true;
+
+        try
+        {
+            var (success, message) = await AuthService.UpdatePinAsync(newPin);
+
+            pinMessage = success ? "✓ " + message : "❌ " + message;
+            pinSuccess = success;
+
+            if (success)
+            {
+                newPin = string.Empty;
+                confirmPin = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            pinMessage = $"Error: {ex.Message}";
+            pinSuccess = false;
+        }
+        finally
+        {
+            isChangingPin = false;
+        }
+    }
+
+    private async Task ExportPdf()
+    {
+        exportMessage = string.Empty;
+        exportSuccess = false;
+        isExporting = true;
+
+        try
+        {
+            var (success, message, filePath) = await ExportService.ExportToPdfAsync(
+                exportStartDate, 
+                exportEndDate
+            );
+
+            exportMessage = success ? "✓ " + message : "❌ " + message;
+            exportSuccess = success;
+
+            if (success && !string.IsNullOrEmpty(filePath))
+            {
+                // Open the HTML file in the default browser
+                await Launcher.OpenAsync(new OpenFileRequest
+                {
+                    File = new ReadOnlyFile(filePath)
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            exportMessage = $"Error: {ex.Message}";
+            exportSuccess = false;
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private void ClearExportDates()
+    {
+        exportStartDate = null;
+        exportEndDate = null;
+        exportMessage = string.Empty;
+    }
+
+    private async Task ToggleTheme()
+    {
+        isTogglingTheme = true;
+
+        try
+        {
+            await ThemeService.ToggleThemeAsync();
+            var newTheme = await ThemeService.GetCurrentThemeAsync();
+            currentTheme = newTheme.ToString();
+            await ApplyTheme(newTheme);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling theme: {ex.Message}");
+        }
+        finally
+        {
+            isTogglingTheme = false;
+        }
+    }
+
+    private void HandleThemeChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            var newTheme = await ThemeService.GetCurrentThemeAsync();
+            currentTheme = newTheme.ToString();
+            await ApplyTheme(newTheme);
+            StateHasChanged();
+        });
+    }
+
+    private async Task ApplyTheme(ThemeMode theme)
+    {
+        var themeValue = theme == ThemeMode.Dark ? "dark" : "light";
+        await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-theme', '{themeValue}')");
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", true);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= HandleThemeChanged;
+    }
+}

@@ -1,8 +1,51 @@
 ﻿@inherits LayoutComponentBase
+@inject IThemeService ThemeService
+@inject IJSRuntime JS
+@using PersonalJournal.Services.Interfaces
+@implements IDisposable
 
-<div data-theme="light">
+<div>
     <NavMenu />
     <main class="page">
         @Body
     </main>
 </div>
+
+@code {
+    private string currentTheme = "light";
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        await UpdateTheme();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UpdateTheme();
+        }
+    }
+
+    private async void OnThemeChanged()
+    {
+        await UpdateTheme();
+    }
+
+    private async Task UpdateTheme()
+    {
+        var theme = await ThemeService.GetCurrentThemeAsync();
+        currentTheme = theme == PersonalJournal.Models.Enums.ThemeMode.Dark ? "dark" : "light";
+        
+        await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-theme', '{currentTheme}')");
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
+    }
+    
+}
