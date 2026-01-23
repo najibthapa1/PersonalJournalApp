@@ -1,5 +1,6 @@
 /* Page Container - VERTICAL LAYOUT */
 .page-container {
+    width:100%;
     max-width: 1150px;
     margin: 0 auto;
     padding: 20px 18px 60px 18px;
@@ -103,7 +104,7 @@
 }
 
 .btn-ghost {
-    border: 1px solid var(--line);
+    border: 1.5px solid #e5e7eb;;
     background: transparent;
     color: var(--text);
     border-radius: 12px;
