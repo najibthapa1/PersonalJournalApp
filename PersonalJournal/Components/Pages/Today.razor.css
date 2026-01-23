@@ -103,7 +103,7 @@
 
 /* Buttons */
 .btn {
-    border: 1px solid rgba(0, 0, 0, .08);
+    border: 1.5px solid #e5e7eb;
     background: var(--navActive);
     color: var(--navActiveText);
     border-radius: 12px;
