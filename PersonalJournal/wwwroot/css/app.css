@@ -1,4 +1,4 @@
-﻿/* ===== RESET & BASE ===== */
+﻿/* Base*/
 * {
     margin: 0;
     padding: 0;
@@ -27,7 +27,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* ===== CSS VARIABLES ===== */
+/* CSS Variables */
 :root {
     /* Light Theme Colors */
     --bg-primary: #f5f7fa;
@@ -98,7 +98,7 @@ body {
     --focus-shadow: rgba(66, 153, 225, 0.2);
 }
 
-/* ===== SCROLLBAR ===== */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
 }
@@ -116,7 +116,7 @@ body {
     background: var(--border-hover);
 }
 
-/* ===== UTILITIES ===== */
+/* Utilities*/
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -129,13 +129,13 @@ body {
     border-width: 0;
 }
 
-/* ===== FOCUS STYLES ===== */
+/* Focus */
 *:focus-visible {
     outline: 2px solid var(--focus-border);
     outline-offset: 2px;
 }
 
-/* ===== LOADING ANIMATION ===== */
+/* Loading animation*/
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -151,7 +151,7 @@ body {
     animation: fadeIn 0.3s ease-out;
 }
 
-/* ===== QUILL EDITOR THEME SUPPORT ===== */
+/* Quill Editor*/
 
 /* Light Theme Quill */
 .ql-toolbar.ql-snow {
@@ -173,9 +173,8 @@ body {
     color: var(--text-tertiary);
 }
 
-//* ===== DARK MODE QUILL EDITOR FIXES ===== */
 
-/* Quill Toolbar - Dark Mode */
+/* Quill Dark Mode */
 [data-theme="dark"] .ql-toolbar.ql-snow {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
@@ -227,24 +226,19 @@ body {
     fill: var(--primary-bg);
 }
 
-/* ===== DARK MODE MOOD CHIPS ===== */
 
-/* Mood Category Labels */
+/* Mood */
 [data-theme="dark"] .group-title {
     color: var(--text-secondary);
 }
 
-/* Mood Chips - Base (Gray background by default) */
+
 [data-theme="dark"] .chip {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
     color: var(--text-primary);
 }
 
-[data-theme="dark"] .chip:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-color);
-}
 
 /* Positive Mood Chips */
 [data-theme="dark"] .chip.active {
@@ -290,8 +284,6 @@ body {
     color: var(--text-primary);
 }
 
-/* ===== DARK MODE INPUT FIELDS (GRAY BACKGROUND) ===== */
-
 [data-theme="dark"] input[type="text"],
 [data-theme="dark"] input[type="password"],
 [data-theme="dark"] input[type="date"] {
@@ -312,7 +304,6 @@ body {
     color: var(--text-tertiary);
 }
 
-/* ===== DARK MODE CARDS ===== */
 
 [data-theme="dark"] .card {
     background: var(--card-bg);
@@ -329,7 +320,7 @@ body {
     background: var(--bg-tertiary);
 }
 
-/* ===== DARK MODE BUTTONS ===== */
+/* Buttons */
 
 [data-theme="dark"] .btn {
     background: var(--primary-bg);
@@ -353,8 +344,6 @@ body {
     border-color: var(--border-hover);
 }
 
-/* ===== DARK MODE SEARCH/FILTER COMPONENTS ===== */
-
 [data-theme="dark"] .searchwrap {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
@@ -368,8 +357,6 @@ body {
 [data-theme="dark"] .search-icon {
     color: var(--text-tertiary);
 }
-
-/* ===== DARK MODE TEXT EDITOR ===== */
 
 [data-theme="dark"] .editor {
     background: var(--bg-tertiary);
@@ -401,8 +388,6 @@ body {
     color: var(--text-tertiary);
 }
 
-/* ===== DARK MODE CALENDAR ===== */
-
 [data-theme="dark"] .day {
     background: transparent;
     border-color: var(--border-color);
@@ -424,10 +409,8 @@ body {
     background: transparent;
 }
 
-/* ===== DARK MODE ANALYTICS ===== */
-
 [data-theme="dark"] .stat-card {
-    background: var(--card-bg);
+    background: var(--bg-tertiary);
     border-color: var(--border-color);
 }
 
@@ -439,8 +422,6 @@ body {
 [data-theme="dark"] .chart-area {
     background: var(--bg-tertiary);
 }
-
-/* ===== DARK MODE TYPOGRAPHY ===== */
 
 [data-theme="dark"] .h1,
 [data-theme="dark"] h1 {
@@ -486,14 +467,12 @@ body {
     color: var(--text-secondary);
 }
 
-/* Mood Pills/Badges */
 [data-theme="dark"] .pill {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
     color: var(--text-primary);
 }
 
-/* Stats Info */
 [data-theme="dark"] .stat-info small {
     color: var(--text-secondary);
 }
@@ -502,12 +481,10 @@ body {
     color: var(--text-primary);
 }
 
-/* Empty States */
 [data-theme="dark"] .empty-state {
     color: var(--text-tertiary);
 }
 
-/* Dot indicators */
 [data-theme="dark"] .dot-pos {
     background: #4ade80;
 }
@@ -520,15 +497,11 @@ body {
     background: #f87171;
 }
 
-/* ===== OVERRIDE LIGHT MODE HOVER EFFECTS IN DARK MODE ===== */
-
-/* Remove all chip hover effects in dark mode */
 [data-theme="dark"] .chip:hover {
     background: var(--bg-tertiary) !important;
     border-color: var(--border-color) !important;
 }
 
-/* Keep active chip styles even on hover */
 [data-theme="dark"] .chip.active:hover {
     background: rgba(34, 197, 94, 0.2) !important;
     border-color: rgba(34, 197, 94, 0.5) !important;
@@ -547,7 +520,6 @@ body {
     color: #f87171 !important;
 }
 
-/* Remove tag chip hover effects */
 [data-theme="dark"] .tag-chip:hover {
     background: var(--bg-tertiary) !important;
     border-color: var(--border-color) !important;
@@ -558,15 +530,11 @@ body {
     border-color: var(--border-hover) !important;
 }
 
-/* Remove entry card hover in timeline */
 [data-theme="dark"] .entry-card:hover {
     background: var(--bg-tertiary) !important;
     border-color: var(--border-color) !important;
 }
 
-/* ===== FIX INPUT FIELDS TO BE GRAY ===== */
-
-/* Override any existing styles for inputs */
 [data-theme="dark"] input[type="text"],
 [data-theme="dark"] input[type="password"],
 [data-theme="dark"] input[type="date"],
@@ -584,30 +552,23 @@ body {
     border-color: var(--focus-border) !important;
 }
 
-/* ===== FIX SPECIFIC PAGE COMPONENTS ===== */
-
-/* Today Page - Title and Content fields */
 [data-theme="dark"] .field input[type="text"] {
     background: var(--bg-tertiary) !important;
 }
 
-/* Custom Tag Input */
 [data-theme="dark"] .custom-tag-row input {
     background: var(--bg-tertiary) !important;
 }
 
-/* Timeline Search Input */
 [data-theme="dark"] .searchwrap input {
     background: transparent !important;
     color: var(--text-primary) !important;
 }
 
-/* Filter inputs in Analytics */
 [data-theme="dark"] .filter-field input {
     background: var(--bg-tertiary) !important;
 }
 
-/* Settings inputs */
 [data-theme="dark"] .form-field input {
     background: var(--bg-tertiary) !important;
 }

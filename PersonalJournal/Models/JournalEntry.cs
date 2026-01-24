@@ -15,7 +15,6 @@ public class JournalEntry
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime?  UpdatedAt { get; set; }
     
-    //Navigation Properties
     public virtual Users Users { get; set; } = null!;
     public virtual Category?  Category { get; set; }   
     public virtual ICollection<EntryMood> EntryMoods { get; set; } = new List<EntryMood>();

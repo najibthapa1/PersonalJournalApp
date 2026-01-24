@@ -62,6 +62,7 @@
         // Load current theme from service
         var currentTheme = await ThemeService.GetCurrentThemeAsync();
         isDarkMode = currentTheme == PersonalJournal.Models.Enums.ThemeMode.Dark;
+        StateHasChanged();
     }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)

@@ -115,7 +115,6 @@
             // Get entries for current month
             var entries = await JournalService.GetEntriesByMonthAsync(currentDate.Year, currentDate.Month);
 
-            // Build map of date -> primary mood category
             entryMoodMap.Clear();
             foreach (var entry in entries)
             {

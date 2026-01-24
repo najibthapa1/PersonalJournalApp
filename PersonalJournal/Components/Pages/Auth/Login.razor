@@ -46,7 +46,7 @@
                        class="form-input" 
                        placeholder="Enter your username"
                        maxlength="50" />
-            <ValidationMessage For="@(() => loginModel.Username)" class="validation-message" />
+            <ValidationMessage For="@(() => loginModel.Username)" style="color: #d32f2f;font-size: 12px;margin-top: 6px;display: block;" />
         </div>
 
         <!-- PIN Field -->
@@ -65,7 +65,7 @@
                        class="form-input" 
                        placeholder="Enter your PIN"
                        maxlength="6" />
-            <ValidationMessage For="@(() => loginModel.Pin)" class="validation-message" />
+            <ValidationMessage For="@(() => loginModel.Pin)"style="color: #d32f2f;font-size: 12px;margin-top: 6px;display: block;"  />
         </div>
 
         <!-- Submit Button -->
@@ -82,7 +82,6 @@
         </button>
     </EditForm>
 
-    <!-- Footer Text -->
     <p class="footer-text">Your journal is stored locally and privately on this device</p>
 
     <!-- Register Link -->

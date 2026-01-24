@@ -17,7 +17,6 @@ public class Users
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
     
-    //Navigation Properties
     public virtual ICollection<JournalEntry> JournalEntries { get; set; } = new List<JournalEntry>();
     public virtual UserSettings? UserSettings { get; set; }
 }

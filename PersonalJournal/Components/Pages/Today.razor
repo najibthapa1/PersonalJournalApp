@@ -199,7 +199,6 @@
     private string customTagInput = string.Empty;
     private string customTagMessage = string.Empty;
 
-    // UI State
     private int currentStreak = 0;
     private bool isSaving = false;
     private string saveMessage = string.Empty;
@@ -228,7 +227,6 @@
                 await JS.InvokeVoidAsync("initQuill", "quill-editor");
                 quillInitialized = true;
 
-                // Set initial content if exists
                 if (!string.IsNullOrEmpty(entryContent))
                 {
                     await JS.InvokeVoidAsync("setQuillContent", entryContent);
@@ -276,7 +274,7 @@
 
             if (currentEntry != null)
             {
-                // Populate form with existing entry
+                //  Keep existing entry
                 entryTitle = currentEntry.Title ?? string.Empty;
                 entryContent = currentEntry.Content;
                 entryCategory = currentEntry.Category?.Name ?? string.Empty;

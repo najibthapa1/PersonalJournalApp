@@ -8,7 +8,6 @@ public class Tag
     public bool IsCustom { get; set; } = false;
     public int? UserId {get; set; }
     
-    //Navigation properties
     public virtual Users?  User { get; set; }
     public virtual ICollection<EntryTag> EntryTags { get; set; } = new List<EntryTag>();
 }

@@ -2,6 +2,7 @@
 @using PersonalJournal.Services.Interfaces
 @using PersonalJournal.Models.DTO
 @using PersonalJournal.Models.Enums
+@using PersonalJournal.Services.Implementation
 @inject IAnalyticsService AnalyticsService
 @inject IStreakService StreakService
 @inject IUserService UserService
@@ -81,9 +82,48 @@
                     <b>@moodDistribution.TotalEntries</b>
                 </div>
             </div>
+            <div class="stat-card" @onclick="ToggleMissedDaysLog" style="cursor: pointer;">
+                <div class="badge b5">⚠️</div>
+                <div class="stat-info">
+                    <small>Missed Days</small>
+                    <b>@totalMissedDays days</b>
+                </div>
+            </div>
         </div>
 
-        <!-- Mood Distribution Panel -->
+        <!-- Missed Days Log -->
+        @if (showMissedDaysLog)
+        {
+            <div class="panel">
+                <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📋 Missed Days Log</span>
+                    <button class="btn-ghost" @onclick="ToggleMissedDaysLog" style="padding: 6px 12px; font-size: 12px;">Close</button>
+                </div>
+                
+                @if (missedDatesList.Any())
+                {
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 16px;">
+                            @foreach (var date in missedDatesList)
+                            {
+                                <div style="padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--text-secondary); text-align: center;">
+                                    @date.ToString("MMM dd, yyyy")
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+                        <strong>Note:</strong> Showing dates from your first entry to today where you didn't journal.
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-chart">🎉 No missed days! Perfect streak!</div>
+                }
+            </div>
+        }
+
+        <!-- Mood Distribution -->
         <div class="panel">
             <div class="panel-title">Mood Distribution</div>
             
@@ -119,7 +159,7 @@
             }
         </div>
 
-        <!-- Most Used Tags Panel -->
+        <!-- Most Used Tags -->
         <div class="panel">
             <div class="panel-title">Most Used Tags</div>
             
@@ -148,7 +188,7 @@
             }
         </div>
 
-        <!-- Word Count Trend Panel -->
+        <!-- Word Count Trend -->
         <div class="panel">
             <div class="panel-title">Word Count Trend</div>
             <div class="trend-info">Average: @averageWordCount words per entry</div>
@@ -159,7 +199,7 @@
                     <svg viewBox="0 0 100 40" preserveAspectRatio="none">
                         @{
                             var maxWords = wordCountTrend.Max(w => w.WordCount);
-                            if (maxWords == 0) maxWords = 1; // Prevent division by zero
+                            if (maxWords == 0) maxWords = 1; 
                             
                             var points = new List<string>();
                             for (int i = 0; i < wordCountTrend.Count; i++)
@@ -171,18 +211,14 @@
                             var polylinePoints = string.Join(" ", points);
                         }
                         
-                        <!-- Grid lines -->
                         <line x1="0" y1="10" x2="100" y2="10" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
                         <line x1="0" y1="20" x2="100" y2="20" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
                         <line x1="0" y1="30" x2="100" y2="30" stroke="#e5e7eb" stroke-width="0.2" opacity="0.5"></line>
                         
-                        <!-- Area fill -->
                         <polygon points="@polylinePoints 100,40 0,40" fill="#3b82f6" opacity="0.1"></polygon>
                         
-                        <!-- Line -->
                         <polyline points="@polylinePoints" fill="none" stroke="#3b82f6" stroke-width="0.5"></polyline>
                         
-                        <!-- Points -->
                         @for (int i = 0; i < wordCountTrend.Count; i++)
                         {
                             var x = (i * 100.0 / Math.Max(wordCountTrend.Count - 1, 1));
@@ -209,7 +245,6 @@
 </div>
 
 @code {
-    // Filters
     private DateTime? startDate;
     private DateTime? endDate;
 
@@ -218,13 +253,15 @@
     private int longestStreak = 0;
     private string? mostFrequentMood;
     private double averageWordCount = 0;
-
+    private bool showMissedDaysLog = false;
+    private int totalMissedDays = 0;
+    
     // Charts data
     private MoodDistributionDto moodDistribution = new();
     private List<TagUsageDto> mostUsedTags = new();
     private List<WordCountDto> wordCountTrend = new();
+    private List<DateTime> missedDatesList =new();
 
-    // UI State
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -245,11 +282,10 @@
 
         try
         {
-            // Load streaks (not affected by date filter)
             currentStreak = await StreakService.GetCurrentStreakAsync();
-            longestStreak = await StreakService.GetLongestStreakAsync();
+            longestStreak = await StreakService.GetLongestStreakAsync(); 
+            await CalculateOverallMissedDays();
 
-            // Load filtered analytics
             moodDistribution = await AnalyticsService.GetMoodDistributionAsync(startDate, endDate);
             mostFrequentMood = await AnalyticsService.GetMostFrequentMoodAsync(startDate, endDate);
             mostUsedTags = await AnalyticsService.GetMostUsedTagsAsync(startDate, endDate);
@@ -277,4 +313,32 @@
         endDate = null;
         await LoadAnalytics();
     }
+    private void ToggleMissedDaysLog()
+    {
+        showMissedDaysLog = !showMissedDaysLog;
+    }
+    private async Task CalculateOverallMissedDays()
+    {
+        var entryDates = await StreakService.GetEntryDatesAsync();
+        
+        if (!entryDates.Any())
+        {
+            totalMissedDays = 0;
+            missedDatesList = new List<DateTime>();
+            return;
+        }
+        
+        var firstEntry = entryDates.Min();
+        var today = DateTime.Today;
+        
+        // Calculate all dates from first entry to today
+        var allDates = Enumerable.Range(0, (today - firstEntry).Days + 1)
+            .Select(offset => firstEntry.AddDays(offset))
+            .ToList();
+        
+        missedDatesList = allDates.Except(entryDates).OrderByDescending(d => d).ToList();
+        totalMissedDays = missedDatesList.Count;
+    }
+
+}
 }

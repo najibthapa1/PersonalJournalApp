@@ -27,4 +27,9 @@ public interface IAuthService
     /// Logs out the current user
     /// </summary>
     Task LogoutAsync();
+    
+    /// <summary>
+    /// Updates the PIN for the current user
+    /// </summary>
+    Task<(bool success, string message)> UpdatePinAsync(string newPin);
 }

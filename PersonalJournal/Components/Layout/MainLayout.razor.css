@@ -45,6 +45,22 @@
             margin-left: 0;
         }
 }
+#app-root {
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#app-root[data-theme="dark"] {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+#app-root[data-theme="light"] {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
 
 @media (min-width: 641px) {
     .page {

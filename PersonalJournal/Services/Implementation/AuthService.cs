@@ -112,4 +112,56 @@ public class AuthService: IAuthService
             _userService.ClearCurrentUser();
             return Task.CompletedTask;
         }
+
+        public async Task<(bool success, string message)> UpdatePinAsync(string newPin)
+        {
+            try
+            {
+                // Check if user is authenticated
+                if (_userService.CurrentUser == null)
+                {
+                    return (false, "User not authenticated");
+                }
+
+                // Validate PIN format
+                if (string.IsNullOrWhiteSpace(newPin))
+                {
+                    return (false, "PIN cannot be empty");
+                }
+
+                if (newPin.Length < 4 || newPin.Length > 6)
+                {
+                    return (false, "PIN must be 4-6 digits");
+                }
+
+                if (!newPin.All(char.IsDigit))
+                {
+                    return (false, "PIN must contain only numbers");
+                }
+
+                // Get user from database
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == _userService.CurrentUser.Id);
+
+                if (user == null)
+                {
+                    return (false, "User not found");
+                }
+
+                // Hash the new PIN
+                var (hash, salt) = PinHasher.HashPin(newPin);
+
+                // Update  PIN
+                user.PinHash = hash;
+                user.Salt = salt;
+
+                await _context.SaveChangesAsync();
+
+                return (true, "PIN updated successfully!");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error updating PIN: {ex.Message}");
+            }
+        }
 }

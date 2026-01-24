@@ -125,7 +125,7 @@
                 <div class="entries-list">
                     @foreach (var entry in filteredEntries)
                     {
-                        <div class="entry-card" @onclick="() => ViewEntry(entry)">
+                        <div class="entry-card" @onclick="() => OpenEntryViewer(entry)">
                             <div class="entry-title">@(string.IsNullOrWhiteSpace(entry.Title) ? "Untitled Entry" : entry.Title)</div>
                             
                             <div class="meta">
@@ -166,6 +166,65 @@
     }
 </div>
 
+<!-- Entry Viewer Modal -->
+@if (selectedEntry != null)
+{
+    <div class="modal-overlay" @onclick="CloseEntryViewer">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2 class="modal-title">@(string.IsNullOrWhiteSpace(selectedEntry.Title) ? "Untitled Entry" : selectedEntry.Title)</h2>
+                <button class="modal-close" @onclick="CloseEntryViewer">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-meta">
+                    <span class="modal-date">📅 @selectedEntry.EntryDate.ToString("dddd, MMMM d, yyyy")</span>
+                    
+                    @if (selectedEntry.EntryMoods.Any(em => em.IsPrimary))
+                    {
+                        var primaryMood = selectedEntry.EntryMoods.First(em => em.IsPrimary).Mood;
+                        <span class="modal-mood @GetMoodClass(primaryMood.Category)">
+                            @primaryMood.Name
+                        </span>
+                    }
+                    
+                    <span class="modal-words">@selectedEntry.WordCount words</span>
+                </div>
+
+                @if (selectedEntry.EntryMoods.Any(em => !em.IsPrimary))
+                {
+                    <div class="modal-secondary-moods">
+                        <strong>Secondary Moods:</strong>
+                        @foreach (var mood in selectedEntry.EntryMoods.Where(em => !em.IsPrimary))
+                        {
+                            <span class="secondary-mood">@mood.Mood.Name</span>
+                        }
+                    </div>
+                }
+
+                @if (selectedEntry.EntryTags.Any())
+                {
+                    <div class="modal-tags">
+                        <strong>Tags:</strong>
+                        @foreach (var tag in selectedEntry.EntryTags)
+                        {
+                            <span class="modal-tag">@tag.Tag.Name</span>
+                        }
+                    </div>
+                }
+
+                <div class="modal-content-area">
+                    @((MarkupString)selectedEntry.Content)
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-ghost" @onclick="CloseEntryViewer">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     // All entries
     private List<JournalEntry> allEntries = new();
@@ -184,8 +243,8 @@
     private List<Mood> allMoods = new();
     private List<Tag> allTags = new();
 
-    // UI State
     private bool isLoading = true;
+    private JournalEntry? selectedEntry = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -351,8 +410,24 @@
         };
     }
 
-    private void ViewEntry(JournalEntry entry)
+    private string GetMoodClass(MoodCategory category)
     {
-        Navigation.NavigateTo("/today");
+        return category switch
+        {
+            MoodCategory.Positive => "mood-positive",
+            MoodCategory.Neutral => "mood-neutral",
+            MoodCategory.Negative => "mood-negative",
+            _ => ""
+        };
+    }
+
+    private void OpenEntryViewer(JournalEntry entry)
+    {
+        selectedEntry = entry;
+    }
+
+    private void CloseEntryViewer()
+    {
+        selectedEntry = null;
     }
 }

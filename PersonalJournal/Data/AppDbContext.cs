@@ -21,8 +21,8 @@ public class AppDbContext : DbContext
         {
             base.OnModelCreating(modelBuilder);
 
-            // ===== USER CONFIGURATION =====
-            modelBuilder.Entity<User>(entity =>
+            //User Configuration
+            modelBuilder.Entity<Users>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Username).IsUnique(); // Username must be unique
@@ -31,7 +31,7 @@ public class AppDbContext : DbContext
                 entity.Property(e => e.Salt).IsRequired();
             });
 
-            // ===== JOURNAL ENTRY CONFIGURATION =====
+            // Journal Entry Configuration
             modelBuilder.Entity<JournalEntry>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -43,10 +43,10 @@ public class AppDbContext : DbContext
                 entity.Property(e => e.Content).IsRequired();
 
                 // Foreign Key: User -> JournalEntries (One-to-Many)
-                entity.HasOne(e => e.User)
+                entity.HasOne(e => e.Users)
                     .WithMany(u => u.JournalEntries)
                     .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade); // Delete entries when user is deleted
+                    .OnDelete(DeleteBehavior.Cascade); 
 
                 // Foreign Key: Category -> JournalEntries (One-to-Many)
                 entity.HasOne(e => e.Category)
@@ -55,37 +55,37 @@ public class AppDbContext : DbContext
                     .OnDelete(DeleteBehavior.SetNull); // Set null if category is deleted
             });
 
-            // ===== MOOD CONFIGURATION =====
+            // Mood Configuration
             modelBuilder.Entity<Mood>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
             });
 
-            // ===== TAG CONFIGURATION =====
+            // Tag Configuration
             modelBuilder.Entity<Tag>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
                 
-                // Unique constraint: Tag name + UserId (custom tags are unique per user)
+                // Unique constraint: Tag name + UserId 
                 entity.HasIndex(e => new { e.Name, e.UserId }).IsUnique();
 
-                // Foreign Key: User -> Tags (One-to-Many for custom tags)
+                // Foreign Key: User -> Tags 
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ===== CATEGORY CONFIGURATION =====
+            // Category Configuration
             modelBuilder.Entity<Category>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             });
 
-            // ===== ENTRY-MOOD CONFIGURATION (Many-to-Many) =====
+            // Entry Mood Configuration
             modelBuilder.Entity<EntryMood>(entity =>
             {
                 // Composite primary key
@@ -104,7 +104,7 @@ public class AppDbContext : DbContext
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ===== ENTRY-TAG CONFIGURATION (Many-to-Many) =====
+            // Entry Tag Configuration
             modelBuilder.Entity<EntryTag>(entity =>
             {
                 // Composite primary key
@@ -123,7 +123,7 @@ public class AppDbContext : DbContext
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ===== USER SETTINGS CONFIGURATION =====
+            // User Setting Configuration
             modelBuilder.Entity<UserSettings>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -136,43 +136,43 @@ public class AppDbContext : DbContext
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ===== SEED DATA =====
+            // Seed Data
             SeedMoods(modelBuilder);
             SeedTags(modelBuilder);
             SeedCategories(modelBuilder);
         }
 
-        // ===== SEED MOODS =====
+        // Seed Mood
         private void SeedMoods(ModelBuilder modelBuilder)
         {
             var moods = new List<Mood>
             {
                 // Positive Moods
-                new Mood { Id = 1, Name = "Happy", Category = MoodCategory.Positive, Emoji = "😊" },
-                new Mood { Id = 2, Name = "Excited", Category = MoodCategory.Positive, Emoji = "🎉" },
-                new Mood { Id = 3, Name = "Relaxed", Category = MoodCategory.Positive, Emoji = "😌" },
-                new Mood { Id = 4, Name = "Grateful", Category = MoodCategory.Positive, Emoji = "🙏" },
-                new Mood { Id = 5, Name = "Confident", Category = MoodCategory.Positive, Emoji = "💪" },
+                new Mood { Id = 1, Name = "Happy", Category = MoodCategory.Positive },
+                new Mood { Id = 2, Name = "Excited", Category = MoodCategory.Positive},
+                new Mood { Id = 3, Name = "Relaxed", Category = MoodCategory.Positive },
+                new Mood { Id = 4, Name = "Grateful", Category = MoodCategory.Positive},
+                new Mood { Id = 5, Name = "Confident", Category = MoodCategory.Positive},
                 
                 // Neutral Moods
-                new Mood { Id = 6, Name = "Calm", Category = MoodCategory.Neutral, Emoji = "😐" },
-                new Mood { Id = 7, Name = "Thoughtful", Category = MoodCategory.Neutral, Emoji = "🤔" },
-                new Mood { Id = 8, Name = "Curious", Category = MoodCategory.Neutral, Emoji = "🧐" },
-                new Mood { Id = 9, Name = "Nostalgic", Category = MoodCategory.Neutral, Emoji = "📸" },
-                new Mood { Id = 10, Name = "Bored", Category = MoodCategory.Neutral, Emoji = "😑" },
+                new Mood { Id = 6, Name = "Calm", Category = MoodCategory.Neutral},
+                new Mood { Id = 7, Name = "Thoughtful", Category = MoodCategory.Neutral,},
+                new Mood { Id = 8, Name = "Curious", Category = MoodCategory.Neutral},
+                new Mood { Id = 9, Name = "Nostalgic", Category = MoodCategory.Neutral},
+                new Mood { Id = 10, Name = "Bored", Category = MoodCategory.Neutral },
                 
                 // Negative Moods
-                new Mood { Id = 11, Name = "Sad", Category = MoodCategory.Negative, Emoji = "😢" },
-                new Mood { Id = 12, Name = "Angry", Category = MoodCategory.Negative, Emoji = "😠" },
-                new Mood { Id = 13, Name = "Stressed", Category = MoodCategory.Negative, Emoji = "😰" },
-                new Mood { Id = 14, Name = "Lonely", Category = MoodCategory.Negative, Emoji = "😔" },
-                new Mood { Id = 15, Name = "Anxious", Category = MoodCategory.Negative, Emoji = "😟" }
+                new Mood { Id = 11, Name = "Sad", Category = MoodCategory.Negative },
+                new Mood { Id = 12, Name = "Angry", Category = MoodCategory.Negative },
+                new Mood { Id = 13, Name = "Stressed", Category = MoodCategory.Negative },
+                new Mood { Id = 14, Name = "Lonely", Category = MoodCategory.Negative},
+                new Mood { Id = 15, Name = "Anxious", Category = MoodCategory.Negative }
             };
 
             modelBuilder.Entity<Mood>().HasData(moods);
         }
 
-        // ===== SEED TAGS =====
+        // Seed Tag
         private void SeedTags(ModelBuilder modelBuilder)
         {
             var tags = new List<Tag>
@@ -213,7 +213,7 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<Tag>().HasData(tags);
         }
 
-        // ===== SEED CATEGORIES =====
+        // Seed Category
         private void SeedCategories(ModelBuilder modelBuilder)
         {
             var categories = new List<Category>

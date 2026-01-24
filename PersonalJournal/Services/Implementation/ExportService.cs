@@ -1,14 +1,10 @@
 using PersonalJournal.Services.Interfaces;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
+using System.Text;
 using System.Text.RegularExpressions;
-using PdfContainer = QuestPDF.Infrastructure.IContainer;
-using PdfColors = QuestPDF.Helpers.Colors;
 
 namespace PersonalJournal.Services.Implementation;
 
-public class ExportService:IExportService
+public class ExportService : IExportService
 {
     private readonly IJournalService _journalService;
     private readonly IUserService _userService;
@@ -20,7 +16,7 @@ public class ExportService:IExportService
     }
 
     public async Task<(bool success, string message, string? filePath)> ExportToPdfAsync(
-        DateTime? startDate = null, 
+        DateTime? startDate = null,
         DateTime? endDate = null)
     {
         try
@@ -32,7 +28,7 @@ public class ExportService:IExportService
 
             // Get entries in date range
             var allEntries = await _journalService.GetAllEntriesAsync();
-                
+
             var entries = allEntries.Where(e =>
             {
                 if (startDate.HasValue && e.EntryDate < startDate.Value) return false;
@@ -45,164 +41,263 @@ public class ExportService:IExportService
                 return (false, "No entries found in the selected date range", null);
             }
 
-            // Generate PDF
-            var fileName = $"Journal_Export_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-            var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+            // Generate HTML
+            var fileName = $"Journal_Export_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+            
+            // Use Documents folder for easier access
+            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var journalFolder = Path.Combine(documentsPath, "Journal Exports");
+            
+            // Create folder if it doesn't exist
+            if (!Directory.Exists(journalFolder))
+            {
+                Directory.CreateDirectory(journalFolder);
+            }
+            
+            var filePath = Path.Combine(journalFolder, fileName);
 
-            // Create PDF document
-            QuestPDF.Settings.License = LicenseType.Community;
+            var htmlContent = GenerateHtml(entries);
+            await File.WriteAllTextAsync(filePath, htmlContent);
 
-            Document.Create(container =>
-                {
-                    container.Page(page =>
-                    {
-                        page.Size(PageSizes.A4);
-                        page.Margin(50);
-                        page.PageColor(PdfColors.White);
-                        page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
-
-                        // Header
-                        page.Header().Element(ComposeHeader);
-
-                        // Content
-                        page.Content().Element(content => ComposeContent(content, entries));
-
-                        // Footer with page numbers
-                        page.Footer().AlignCenter().Text(text =>
-                        {
-                            text.CurrentPageNumber();
-                            text.Span(" / ");
-                            text.TotalPages();
-                        });
-                    });
-                })
-                .GeneratePdf(filePath);
-
-            return (true, $"Successfully exported {entries.Count} entries to PDF", filePath);
+            return (true, $"Successfully exported {entries.Count} entries. File saved to Documents/Journal Exports/", filePath);
         }
         catch (Exception ex)
         {
-            return (false, $"Error exporting to PDF: {ex.Message}", null);
+            return (false, $"Error exporting: {ex.Message}", null);
         }
     }
-    
-        private void ComposeHeader(PdfContainer container)
+
+    private string GenerateHtml(List<Models.JournalEntry> entries)
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine(@"<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Personal Journal Export</title>
+    <style>
+        @media print {
+            @page {
+                margin: 2cm;
+            }
+            .no-print {
+                display: none;
+            }
+            .entry {
+                page-break-inside: avoid;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f9fafb;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: black;
+            margin-bottom: 10px;
+        }
+
+        .header .meta {
+            color: black;
+            font-size: 14px;
+        }
+
+        .print-button {
+            background: black;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .print-button:hover {
+            background: black;
+        }
+
+        .entry {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .entry-date {
+            font-size: 18px;
+            font-weight: 700;
+            color: black;
+            margin-bottom: 10px;
+        }
+
+        .entry-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: black;
+            margin-bottom: 15px;
+        }
+
+        .entry-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .mood {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .mood-positive {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .mood-neutral {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .mood-negative {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .tags {
+            color: #64748b;
+        }
+
+        .entry-content {
+            margin-top: 20px;
+            line-height: 1.8;
+            color: #334155;
+        }
+
+        .entry-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            text-align: right;
+            font-size: 12px;
+            color: #94a3af;
+            font-style: italic;
+        }
+
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .summary h2 {
+            color: black;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>📖 Personal Journal</h1>
+        <div class='meta'>
+            <strong>User:</strong> " + _userService.CurrentUser?.Username + @"<br>
+            <strong>Exported:</strong> " + DateTime.Now.ToString("MMMM dd, yyyy 'at' HH:mm") + @"
+        </div>
+    </div>
+
+    <button class='print-button no-print' onclick='window.print()'>
+        🖨️ Save as PDF
+    </button>
+
+    <div class='summary'>
+        <h2>Export Summary</h2>
+        <p><strong>" + entries.Count + @"</strong> journal entries</p>
+    </div>
+");
+
+        foreach (var entry in entries)
         {
-            container.Row(row =>
+            sb.AppendLine("    <div class='entry'>");
+            sb.AppendLine($"        <div class='entry-date'>{entry.EntryDate:dddd, MMMM d, yyyy}</div>");
+
+            if (!string.IsNullOrWhiteSpace(entry.Title))
             {
-                row.RelativeItem().Column(column =>
-                {
-                    column.Item().Text("Personal Journal Export")
-                        .FontSize(20)
-                        .Bold()
-                        .FontColor(PdfColors.Blue.Darken2);
+                sb.AppendLine($"        <div class='entry-title'>{System.Net.WebUtility.HtmlEncode(entry.Title)}</div>");
+            }
 
-                    column.Item().Text($"User: {_userService.CurrentUser?.Username}")
-                        .FontSize(10)
-                        .FontColor(PdfColors.Grey.Darken1);
+            sb.AppendLine("        <div class='entry-meta'>");
 
-                    column.Item().Text($"Exported: {DateTime.Now:MMMM dd, yyyy HH:mm}")
-                        .FontSize(10)
-                        .FontColor(PdfColors.Grey.Darken1);
-                });
-            });
-        }
-
-        private void ComposeContent(PdfContainer container, List<Models.JournalEntry> entries)
-        {
-            container.PaddingVertical(20).Column(column =>
+            // Mood
+            var primaryMood = entry.EntryMoods.FirstOrDefault(em => em.IsPrimary);
+            if (primaryMood != null)
             {
-                column.Spacing(20);
-
-                foreach (var entry in entries)
+                var moodClass = primaryMood.Mood.Category switch
                 {
-                    column.Item().Element(c => ComposeEntry(c, entry));
-                }
-            });
-        }
+                    Models.Enums.MoodCategory.Positive => "mood-positive",
+                    Models.Enums.MoodCategory.Neutral => "mood-neutral",
+                    Models.Enums.MoodCategory.Negative => "mood-negative",
+                    _ => ""
+                };
+                sb.AppendLine($"            <span class='mood {moodClass}'>{primaryMood.Mood.Name}</span>");
+            }
 
-        private void ComposeEntry(PdfContainer container, Models.JournalEntry entry)
-        {
-            container.Border(1).BorderColor(PdfColors.Grey.Lighten2).Padding(15).Column(column =>
+            // Tags
+            if (entry.EntryTags.Any())
             {
-                // Date
-                column.Item().Text(entry.EntryDate.ToString("dddd, MMMM d, yyyy"))
-                    .FontSize(14)
-                    .Bold()
-                    .FontColor(PdfColors.Blue.Darken1);
+                var tags = string.Join(", ", entry.EntryTags.Select(et => et.Tag.Name));
+                sb.AppendLine($"            <span class='tags'>🏷️ {System.Net.WebUtility.HtmlEncode(tags)}</span>");
+            }
 
-                column.Item().PaddingVertical(5);
+            sb.AppendLine("        </div>");
 
-                // Title (if exists)
-                if (!string.IsNullOrEmpty(entry.Title))
-                {
-                    column.Item().Text(entry.Title)
-                        .FontSize(13)
-                        .SemiBold()
-                        .FontColor(PdfColors.Black);
-                    
-                    column.Item().PaddingVertical(3);
-                }
+            // Content
+            sb.AppendLine("        <div class='entry-content'>");
+            sb.AppendLine($"            {entry.Content}");
+            sb.AppendLine("        </div>");
 
-                // Mood
-                var primaryMood = entry.EntryMoods.FirstOrDefault(em => em.IsPrimary);
-                if (primaryMood != null)
-                {
-                    column.Item().Text($"Mood: {primaryMood.Mood.Name} ({primaryMood.Mood.Category})")
-                        .FontSize(10)
-                        .FontColor(GetMoodColor(primaryMood.Mood.Category));
-                }
+            // Footer
+            sb.AppendLine("        <div class='entry-footer'>");
+            sb.AppendLine($"            {entry.WordCount} words");
+            sb.AppendLine("        </div>");
 
-                // Tags
-                if (entry.EntryTags.Any())
-                {
-                    var tags = string.Join(", ", entry.EntryTags.Select(et => et.Tag.Name));
-                    column.Item().Text($"Tags: {tags}")
-                        .FontSize(10)
-                        .FontColor(PdfColors.Grey.Darken1);
-                }
-
-                column.Item().PaddingVertical(8);
-
-                // Content (strip HTML)
-                var textContent = StripHtml(entry.Content);
-                column.Item().Text(textContent)
-                    .FontSize(11)
-                    .LineHeight(1.5f);
-
-                column.Item().PaddingVertical(5);
-
-                // Word count
-                column.Item().AlignRight().Text($"{entry.WordCount} words")
-                    .FontSize(9)
-                    .Italic()
-                    .FontColor(PdfColors.Grey.Medium);
-            });
+            sb.AppendLine("    </div>");
         }
 
-        private string GetMoodColor(Models.Enums.MoodCategory category)
-        {
-            return category switch
-            {
-                Models.Enums.MoodCategory.Positive => PdfColors.Green.Darken1,
-                Models.Enums.MoodCategory.Neutral => PdfColors.Grey.Darken1,
-                Models.Enums.MoodCategory.Negative => PdfColors.Red.Darken1,
-                _ => PdfColors.Black
-            };
-        }
+        sb.AppendLine(@"
+</body>
+</html>");
 
-        private string StripHtml(string html)
-        {
-            if (string.IsNullOrWhiteSpace(html))
-                return string.Empty;
-
-            // Remove HTML tags
-            var text = Regex.Replace(html, "<.*?>", " ");
-            
-            // Replace multiple spaces with single space
-            text = Regex.Replace(text, @"\s+", " ");
-            
-            return text.Trim();
-        }
-    
+        return sb.ToString();
+    }
 }

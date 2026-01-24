@@ -6,7 +6,6 @@
 @inject IExportService ExportService
 @inject IThemeService ThemeService
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 <PageTitle>Settings - Personal Journal</PageTitle>
 
@@ -96,7 +95,7 @@
         </div>
     </div>
 
-    <!-- Appearance Section -->
+    <!-- Theme Section -->
     <div class="card">
         <div class="card-pad">
             <div class="section-title">🌗 Appearance</div>
@@ -158,16 +157,12 @@
 
         // Load current theme
         await LoadCurrentTheme();
-
-        // Subscribe to theme changes
-        ThemeService.OnThemeChanged += HandleThemeChanged;
     }
 
     private async Task LoadCurrentTheme()
     {
         var theme = await ThemeService.GetCurrentThemeAsync();
         currentTheme = theme.ToString();
-        await ApplyTheme(theme);
     }
 
     private async Task ChangePin()
@@ -205,7 +200,7 @@
         }
         catch (Exception ex)
         {
-            pinMessage = $"Error: {ex.Message}";
+            pinMessage = $"❌ Error: {ex.Message}";
             pinSuccess = false;
         }
         finally
@@ -232,16 +227,31 @@
 
             if (success && !string.IsNullOrEmpty(filePath))
             {
-                // Open the HTML file in the default browser
-                await Launcher.OpenAsync(new OpenFileRequest
+                // Show alert with file location
+                var fileName = Path.GetFileName(filePath);
+                exportMessage = $"✓ Exported successfully! File: {fileName} (saved in Documents/Journal Exports folder)";
+                
+                try
                 {
-                    File = new ReadOnlyFile(filePath)
-                });
+                    var folderPath = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrEmpty(folderPath))
+                    {
+                        await Launcher.OpenAsync(new OpenFileRequest
+                        {
+                            File = new ReadOnlyFile(filePath),
+                            Title = "Open Journal Export"
+                        });
+                    }
+                }
+                catch
+                {
+                    // If opening fails, just show the success message
+                }
             }
         }
         catch (Exception ex)
         {
-            exportMessage = $"Error: {ex.Message}";
+            exportMessage = $"❌ Error: {ex.Message}";
             exportSuccess = false;
         }
         finally
@@ -266,7 +276,6 @@
             await ThemeService.ToggleThemeAsync();
             var newTheme = await ThemeService.GetCurrentThemeAsync();
             currentTheme = newTheme.ToString();
-            await ApplyTheme(newTheme);
         }
         catch (Exception ex)
         {
@@ -278,31 +287,9 @@
         }
     }
 
-    private void HandleThemeChanged()
-    {
-        InvokeAsync(async () =>
-        {
-            var newTheme = await ThemeService.GetCurrentThemeAsync();
-            currentTheme = newTheme.ToString();
-            await ApplyTheme(newTheme);
-            StateHasChanged();
-        });
-    }
-
-    private async Task ApplyTheme(ThemeMode theme)
-    {
-        var themeValue = theme == ThemeMode.Dark ? "dark" : "light";
-        await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-theme', '{themeValue}')");
-    }
-
     private async Task Logout()
     {
         await AuthService.LogoutAsync();
         Navigation.NavigateTo("/login", true);
-    }
-
-    public void Dispose()
-    {
-        ThemeService.OnThemeChanged -= HandleThemeChanged;
     }
 }

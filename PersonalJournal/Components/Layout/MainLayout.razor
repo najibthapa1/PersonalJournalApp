@@ -1,10 +1,11 @@
 ﻿@inherits LayoutComponentBase
+@using PersonalJournal.Services.Interfaces
+@using PersonalJournal.Models.Enums
 @inject IThemeService ThemeService
 @inject IJSRuntime JS
-@using PersonalJournal.Services.Interfaces
 @implements IDisposable
 
-<div>
+<div data-theme="@currentTheme">
     <NavMenu />
     <main class="page">
         @Body
@@ -12,40 +13,51 @@
 </div>
 
 @code {
+
     private string currentTheme = "light";
+    private bool themeApplied;
 
     protected override async Task OnInitializedAsync()
     {
         ThemeService.OnThemeChanged += OnThemeChanged;
-        await UpdateTheme();
+        await LoadThemeAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!themeApplied)
         {
-            await UpdateTheme();
+            await ApplyThemeAsync();
+            themeApplied = true;
         }
     }
 
-    private async void OnThemeChanged()
-    {
-        await UpdateTheme();
-    }
-
-    private async Task UpdateTheme()
+    private async Task LoadThemeAsync()
     {
         var theme = await ThemeService.GetCurrentThemeAsync();
-        currentTheme = theme == PersonalJournal.Models.Enums.ThemeMode.Dark ? "dark" : "light";
-        
-        await JS.InvokeVoidAsync("eval", $"document.documentElement.setAttribute('data-theme', '{currentTheme}')");
-        
-        await InvokeAsync(StateHasChanged);
+        currentTheme = theme == ThemeMode.Dark ? "dark" : "light";
+    }
+
+    private void OnThemeChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await LoadThemeAsync();
+            await ApplyThemeAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task ApplyThemeAsync()
+    {
+        await JS.InvokeVoidAsync(
+            "setTheme",
+            currentTheme
+        );
     }
 
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= OnThemeChanged;
     }
-    
 }

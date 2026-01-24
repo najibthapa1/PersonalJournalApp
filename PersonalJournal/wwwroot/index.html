@@ -30,6 +30,11 @@
     <!-- Custom Scripts -->
     <script src="js/quill-editor.js"></script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script>
+        window.setTheme = function (theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+        };
+    </script>
 
 </body>
 

@@ -16,6 +16,5 @@ public class UserSettings
 
     public DateTime? UpdatedAt { get; set; }
 
-    // Navigation property
     public virtual Users User { get; set; } = null!;
 }
